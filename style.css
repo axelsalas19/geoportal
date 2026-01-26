@@ -34,7 +34,7 @@ body {
   flex-wrap: wrap;
   border: 1px solid rgba(0,0,0,0.1);
   max-height: 85px;
-  overflow: hidden;
+  overflow: visible;
   transition: max-height 0.3s ease;
 }
 
@@ -68,6 +68,7 @@ body {
   position: relative;
   min-width: 130px;
   flex: 1;
+  z-index: 1;
 }
 
 .filtro-grupo label {
@@ -105,20 +106,29 @@ body {
   border: 1.5px solid #e2e8f0;
   border-top: none;
   border-radius: 0 0 8px 8px;
-  max-height: 200px;
+  max-height: 250px;
   overflow-y: auto;
-  z-index: 1001;
+  overflow-x: hidden;
+  z-index: 1050;
   display: none;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  margin-top: 1px;
 }
 
 .autocomplete-item {
-  padding: 8px 12px;
+  padding: 10px 12px;
   cursor: pointer;
   font-size: 13px;
   color: #4a5568;
   transition: all 0.2s ease;
   border-bottom: 1px solid #f7fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.autocomplete-item:last-child {
+  border-bottom: none;
 }
 
 .autocomplete-item:hover {
