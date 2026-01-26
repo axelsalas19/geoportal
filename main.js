@@ -57,11 +57,17 @@ function clasificar(p) {
 // ======================================================
 function centroide(coords) {
   let x = 0, y = 0, c = 0;
-  (function walk(a) {
-    if (Array.isArray(a[0][0])) a.forEach(walk);
-    else a.forEach(p => { x += p[0]; y += p[1]; c++; });
+
+  (function recorrer(a) {
+    if (Array.isArray(a[0][0])) a.forEach(recorrer);
+    else a.forEach(p => {
+      x += p[0];
+      y += p[1];
+      c++;
+    });
   })(coords);
-  return [x / c, y / c];
+
+  return [y / c, x / c]; // Leaflet usa lat, lng
 }
 
 // ======================================================
@@ -84,6 +90,9 @@ async function cargarDepartamentos() {
     style: f => {
       const c = clasificar(f.properties.porcentaje || 0);
       f.properties.nivel = c.nivel;
+
+      listaDepartamentos.add(f.properties.nombre || f.properties.nam);
+
       return {
         color: '#334155',
         weight: 1,
@@ -93,28 +102,29 @@ async function cargarDepartamentos() {
     },
     onEachFeature: (f, l) => {
       const p = f.properties;
-      listaDepartamentos.add(p.nombre || p.nam);
 
       l.bindPopup(`
         <b>${p.nombre || p.nam}</b><br>
-        % Extranjeros: ${p.porcentaje.toFixed(2)} (${p.nivel})
+        % Extranjeros: ${p.porcentaje.toFixed(2)}% (${p.nivel})
       `);
     }
   }).addTo(map);
 
-  // PUNTOS
+  // -------------------------
+  // PUNTOS (centroides)
+  // -------------------------
   puntosLayer = L.geoJSON(gj, {
+    coordsToLatLng: g => centroide(g.coordinates),
     pointToLayer: (f, latlng) => {
       const c = clasificar(f.properties.porcentaje || 0);
       return L.circleMarker(latlng, {
         radius: 6,
         fillColor: c.color,
-        color: '#fff',
+        color: '#ffffff',
         weight: 1,
         fillOpacity: 0.9
       });
-    },
-    coordsToLatLng: g => centroide(g.coordinates)
+    }
   }).addTo(map);
 
   map.fitBounds(departamentosLayer.getBounds());
@@ -142,7 +152,7 @@ async function cargarProvincias() {
       weight: 2,
       fillOpacity: 0
     },
-    onEachFeature: (f, l) => {
+    onEachFeature: (f) => {
       listaProvincias.add(f.properties.nombre || f.properties.nam);
     }
   });
@@ -154,9 +164,14 @@ async function cargarProvincias() {
 function toggleCapa(tipo) {
   if (tipo === 'departamentos') {
     departamentosVisibles = !departamentosVisibles;
-    departamentosVisibles
-      ? (departamentosLayer.addTo(map), puntosLayer.addTo(map))
-      : (map.removeLayer(departamentosLayer), map.removeLayer(puntosLayer));
+
+    if (departamentosVisibles) {
+      departamentosLayer.addTo(map);
+      puntosLayer.addTo(map);
+    } else {
+      map.removeLayer(departamentosLayer);
+      map.removeLayer(puntosLayer);
+    }
   }
 
   if (tipo === 'provincias') {
@@ -178,6 +193,7 @@ function mostrarAutocomplete(tipo) {
   const data = tipo === 'provincia' ? listaProvincias : listaDepartamentos;
 
   box.innerHTML = '';
+
   [...data]
     .filter(v => v.toLowerCase().includes(input.value.toLowerCase()))
     .slice(0, 8)
@@ -199,7 +215,6 @@ function mostrarAutocomplete(tipo) {
 // FILTROS (BUSCAR)
 // ======================================================
 function aplicarFiltros() {
-  const prov = document.getElementById('filtroProvincia').value.toLowerCase();
   const depto = document.getElementById('filtroDepartamento').value.toLowerCase();
   const nivel = document.getElementById('filtroNivel').value;
 
@@ -212,7 +227,12 @@ function aplicarFiltros() {
     if (depto && !p.nombre.toLowerCase().includes(depto)) ok = false;
     if (nivel && p.nivel !== nivel) ok = false;
 
-    ok ? (l.addTo(map), bounds.extend(l.getBounds())) : map.removeLayer(l);
+    if (ok && departamentosVisibles) {
+      l.addTo(map);
+      bounds.extend(l.getBounds());
+    } else {
+      map.removeLayer(l);
+    }
   });
 
   puntosLayer.eachLayer(l => {
@@ -222,7 +242,9 @@ function aplicarFiltros() {
     if (depto && !p.nombre.toLowerCase().includes(depto)) ok = false;
     if (nivel && p.nivel !== nivel) ok = false;
 
-    ok ? l.addTo(map) : map.removeLayer(l);
+    ok && departamentosVisibles
+      ? l.addTo(map)
+      : map.removeLayer(l);
   });
 
   if (bounds.isValid()) map.fitBounds(bounds);
@@ -236,8 +258,9 @@ function limpiarFiltros() {
   document.getElementById('filtroDepartamento').value = '';
   document.getElementById('filtroNivel').value = '';
 
-  departamentosLayer.eachLayer(l => l.addTo(map));
-  puntosLayer.eachLayer(l => l.addTo(map));
-
-  map.fitBounds(departamentosLayer.getBounds());
+  if (departamentosVisibles) {
+    departamentosLayer.eachLayer(l => l.addTo(map));
+    puntosLayer.eachLayer(l => l.addTo(map));
+    map.fitBounds(departamentosLayer.getBounds());
+  }
 }
