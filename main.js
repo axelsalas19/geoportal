@@ -1,13 +1,13 @@
-// ================================
+// ======================================================
 // CONFIGURACIÓN SUPABASE
-// ================================
+// ======================================================
 const URL_SUPABASE = 'https://gnknhnxasvmrejdpljux.supabase.co';
 const API_KEY_SUPABASE =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdua25obnhhc3ZtcmVqZHBsanV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzOTIyMDcsImV4cCI6MjA4Mzk2ODIwN30.pbuYSf7fz_3o3UScjfAr0dS_LlT-ZFwC4hbU0MTWMj4';
 
-// ================================
+// ======================================================
 // VARIABLES GLOBALES
-// ================================
+// ======================================================
 let map = null;
 let departamentosLayer = null;
 let provinciasLayer = null;
@@ -22,16 +22,29 @@ let departamentosCargados = false;
 let provinciasVisibles = false;
 let departamentosVisibles = true;
 
-// ================================
+// ======================================================
 // INIT
-// ================================
+// ======================================================
 document.addEventListener('DOMContentLoaded', () => {
   inicializarAplicacion();
 });
 
-// ================================
+// ======================================================
+// CLASIFICACIÓN POR PORCENTAJE
+// ======================================================
+function clasificarPorcentaje(porcentaje) {
+  if (porcentaje > 10) {
+    return { nivel: 'alto', color: '#F44336' };
+  }
+  if (porcentaje >= 6) {
+    return { nivel: 'medio', color: '#FFC107' };
+  }
+  return { nivel: 'bajo', color: '#4CAF50' };
+}
+
+// ======================================================
 // INICIALIZACIÓN GENERAL
-// ================================
+// ======================================================
 async function inicializarAplicacion() {
   try {
     inicializarMapa();
@@ -48,9 +61,9 @@ async function inicializarAplicacion() {
   }
 }
 
-// ================================
+// ======================================================
 // MAPA
-// ================================
+// ======================================================
 function inicializarMapa() {
   map = L.map('map').setView([-38.4161, -63.6167], 5);
 
@@ -63,9 +76,9 @@ function inicializarMapa() {
   ).addTo(map);
 }
 
-// ================================
+// ======================================================
 // STATUS
-// ================================
+// ======================================================
 function mostrarEstado(mensaje, tipo = 'info') {
   const status = document.getElementById('status');
   status.textContent = mensaje;
@@ -84,10 +97,10 @@ function mostrarEstado(mensaje, tipo = 'info') {
   }, 3000);
 }
 
-// ================================
+// ======================================================
 // AUTOCOMPLETE CLOSE
-// ================================
-document.addEventListener('click', (e) => {
+// ======================================================
+document.addEventListener('click', e => {
   if (!e.target.closest('.filtro-grupo')) {
     document.querySelectorAll('.autocomplete-list').forEach(el => {
       el.style.display = 'none';
@@ -95,9 +108,9 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// ================================
+// ======================================================
 // UTIL: CENTROIDE
-// ================================
+// ======================================================
 function calcularCentroide(coords) {
   let sumLng = 0;
   let sumLat = 0;
@@ -119,9 +132,9 @@ function calcularCentroide(coords) {
   return count ? [sumLng / count, sumLat / count] : [0, 0];
 }
 
-// ================================
+// ======================================================
 // CARGAR DEPARTAMENTOS
-// ================================
+// ======================================================
 async function cargarDepartamentos() {
   try {
     mostrarEstado('Cargando departamentos...', 'info');
@@ -140,32 +153,65 @@ async function cargarDepartamentos() {
     const geojson = await res.json();
 
     geojson.features.forEach(f => {
-      if (f.properties?.nombre) listaDepartamentos.add(f.properties.nombre);
+      const nombre = f.properties?.nombre || f.properties?.nam;
+      if (nombre) listaDepartamentos.add(nombre);
     });
 
+    // ===== POLÍGONOS =====
     departamentosLayer = L.geoJSON(geojson, {
-      style: {
-        color: '#475569',
-        weight: 1,
-        fillOpacity: 0.3
+      style: feature => {
+        const porcentaje = feature.properties.porcentaje || 0;
+        const cls = clasificarPorcentaje(porcentaje);
+
+        return {
+          color: '#475569',
+          weight: 1,
+          fillColor: cls.color,
+          fillOpacity: 0.45
+        };
       },
       onEachFeature: (feature, layer) => {
         const p = feature.properties;
+        const porcentaje = p.porcentaje || 0;
+        const cls = clasificarPorcentaje(porcentaje);
+
+        layer.feature.properties.nivel = cls.nivel;
+
         layer.bindPopup(`
-          <strong>${p.nombre || 'Sin nombre'}</strong><br>
-          % extranjeros: ${p.porcentaje?.toFixed(2) ?? '-'}%
+          <strong>${p.nombre || p.nam || 'Sin nombre'}</strong><br>
+          % extranjeros:
+          <b style="color:${cls.color}">
+            ${porcentaje.toFixed(2)}% (${cls.nivel})
+          </b>
         `);
+
+        layer.on('mouseover', () => {
+          layer.setStyle({ fillOpacity: 0.7, weight: 2 });
+        });
+
+        layer.on('mouseout', () => {
+          layer.setStyle({ fillOpacity: 0.45, weight: 1 });
+        });
       }
     });
 
+    // ===== PUNTOS =====
     const puntos = geojson.features.map(f => {
-      const c = calcularCentroide(f.geometry.coordinates);
+      const porcentaje = f.properties.porcentaje || 0;
+      const cls = clasificarPorcentaje(porcentaje);
+      const centro = calcularCentroide(f.geometry.coordinates);
+
       return {
         type: 'Feature',
-        geometry: { type: 'Point', coordinates: c },
+        geometry: {
+          type: 'Point',
+          coordinates: centro
+        },
         properties: {
-          nombre: f.properties.nombre,
-          porcentaje: f.properties.porcentaje
+          nombre: f.properties.nombre || f.properties.nam,
+          porcentaje,
+          nivel: cls.nivel,
+          color: cls.color
         }
       };
     });
@@ -173,14 +219,21 @@ async function cargarDepartamentos() {
     puntosLayer = L.geoJSON(
       { type: 'FeatureCollection', features: puntos },
       {
-        pointToLayer: (_, latlng) =>
+        pointToLayer: (feature, latlng) =>
           L.circleMarker(latlng, {
             radius: 6,
-            fillColor: '#3b82f6',
-            color: '#fff',
+            fillColor: feature.properties.color,
+            color: '#ffffff',
             weight: 1,
-            fillOpacity: 0.8
-          })
+            fillOpacity: 0.85
+          }),
+        onEachFeature: (feature, layer) => {
+          const p = feature.properties;
+          layer.bindPopup(`
+            <strong>${p.nombre}</strong><br>
+            % extranjeros: ${p.porcentaje.toFixed(2)}% (${p.nivel})
+          `);
+        }
       }
     );
 
@@ -196,9 +249,9 @@ async function cargarDepartamentos() {
   }
 }
 
-// ================================
+// ======================================================
 // CARGAR PROVINCIAS
-// ================================
+// ======================================================
 async function cargarProvinciasEnSegundoPlano() {
   try {
     const res = await fetch(`${URL_SUPABASE}/rest/v1/rpc/get_provincias_geojson`, {
@@ -215,7 +268,8 @@ async function cargarProvinciasEnSegundoPlano() {
     const geojson = await res.json();
 
     geojson.features.forEach(f => {
-      if (f.properties?.nombre) listaProvincias.add(f.properties.nombre);
+      const nombre = f.properties?.nombre || f.properties?.nam || f.properties?.fna;
+      if (nombre) listaProvincias.add(nombre);
     });
 
     provinciasLayer = L.geoJSON(geojson, {
@@ -232,13 +286,15 @@ async function cargarProvinciasEnSegundoPlano() {
   }
 }
 
-// ================================
+// ======================================================
 // TOGGLE CAPAS
-// ================================
+// ======================================================
 function toggleCapa(tipo) {
   if (tipo === 'provincias' && provinciasLayer) {
     provinciasVisibles = !provinciasVisibles;
-    document.getElementById('btnProvincias').classList.toggle('active', provinciasVisibles);
+    document
+      .getElementById('btnProvincias')
+      .classList.toggle('active', provinciasVisibles);
 
     provinciasVisibles
       ? provinciasLayer.addTo(map)
@@ -247,7 +303,9 @@ function toggleCapa(tipo) {
 
   if (tipo === 'departamentos' && departamentosLayer) {
     departamentosVisibles = !departamentosVisibles;
-    document.getElementById('btnDepartamentos').classList.toggle('active', departamentosVisibles);
+    document
+      .getElementById('btnDepartamentos')
+      .classList.toggle('active', departamentosVisibles);
 
     if (departamentosVisibles) {
       departamentosLayer.addTo(map);
@@ -261,9 +319,9 @@ function toggleCapa(tipo) {
   aplicarFiltros();
 }
 
-// ================================
+// ======================================================
 // AUTOCOMPLETE
-// ================================
+// ======================================================
 function mostrarAutocomplete(tipo) {
   const input =
     tipo === 'provincia'
@@ -276,7 +334,7 @@ function mostrarAutocomplete(tipo) {
       : listaDepartamentos;
 
   const box = document.getElementById(`autocomplete-${tipo}`);
-  const q = input.value.toLowerCase();
+  const q = input.value.toLowerCase().trim();
 
   if (!q) {
     box.style.display = 'none';
@@ -302,13 +360,42 @@ function mostrarAutocomplete(tipo) {
   box.style.display = 'block';
 }
 
-// ================================
+// ======================================================
 // FILTROS
-// ================================
+// ======================================================
 function aplicarFiltros() {
-  // se mantiene igual que tu lógica original
+  const fProv = document.getElementById('filtroProvincia').value.toLowerCase();
+  const fDepto = document.getElementById('filtroDepartamento').value.toLowerCase();
+  const fNivel = document.getElementById('filtroNivel').value;
+
+  if (departamentosLayer) {
+    departamentosLayer.eachLayer(layer => {
+      const p = layer.feature.properties;
+      let visible = true;
+
+      if (fDepto && !(p.nombre || '').toLowerCase().includes(fDepto)) visible = false;
+      if (fNivel && p.nivel !== fNivel) visible = false;
+
+      visible ? map.addLayer(layer) : map.removeLayer(layer);
+    });
+  }
+
+  if (puntosLayer) {
+    puntosLayer.eachLayer(layer => {
+      const p = layer.feature.properties;
+      let visible = true;
+
+      if (fDepto && !p.nombre.toLowerCase().includes(fDepto)) visible = false;
+      if (fNivel && p.nivel !== fNivel) visible = false;
+
+      visible ? map.addLayer(layer) : map.removeLayer(layer);
+    });
+  }
 }
 
+// ======================================================
+// LIMPIAR
+// ======================================================
 function limpiarFiltros() {
   document.getElementById('filtroProvincia').value = '';
   document.getElementById('filtroDepartamento').value = '';
