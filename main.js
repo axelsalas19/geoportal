@@ -1,25 +1,20 @@
 // ======================================================
 // SUPABASE
 // ======================================================
-const URL_SUPABASE = 'https://gnknhnxasvmrejdpljux.supabase.co';
-const API_KEY_SUPABASE =
+const SUPABASE_URL = 'https://gnknhnxasvmrejdpljux.supabase.co';
+const SUPABASE_KEY =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdua25obnhhc3ZtcmVqZHBsanV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzOTIyMDcsImV4cCI6MjA4Mzk2ODIwN30.pbuYSf7fz_3o3UScjfAr0dS_LlT-ZFwC4hbU0MTWMj4';
 
 // ======================================================
 // GLOBALES
 // ======================================================
 let map;
-let departamentosLayer;
-let puntosLayer;
-let provinciasLayer;
+let geojsonBase;
 
-let geojsonDepartamentos; // 🔑 DATA BASE
+let layerDepartamentos;
+let layerPuntos;
 
 let departamentosVisibles = true;
-let provinciasVisibles = false;
-
-let listaProvincias = new Set();
-let listaDepartamentos = new Set();
 
 // ======================================================
 // INIT
@@ -28,8 +23,7 @@ document.addEventListener('DOMContentLoaded', init);
 
 async function init() {
   initMap();
-  await cargarDepartamentos();
-  await cargarProvincias();
+  await cargarDatos();
   document.getElementById('cargando').style.display = 'none';
 }
 
@@ -55,51 +49,50 @@ function clasificar(p) {
 }
 
 // ======================================================
-// CENTROIDE
+// CENTROIDE SIMPLE
 // ======================================================
 function centroide(coords) {
   let x = 0, y = 0, c = 0;
-  (function walk(a) {
-    if (Array.isArray(a[0][0])) a.forEach(walk);
-    else a.forEach(p => { x += p[0]; y += p[1]; c++; });
-  })(coords);
+  coords[0].forEach(p => {
+    x += p[0];
+    y += p[1];
+    c++;
+  });
   return [y / c, x / c];
 }
 
 // ======================================================
-// CARGA DEPARTAMENTOS (UNA SOLA VEZ)
+// CARGA DATOS
 // ======================================================
-async function cargarDepartamentos() {
-  const r = await fetch(`${URL_SUPABASE}/rest/v1/rpc/get_departamentos_geojson`, {
+async function cargarDatos() {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_departamentos_geojson`, {
     method: 'POST',
     headers: {
-      apikey: API_KEY_SUPABASE,
-      Authorization: `Bearer ${API_KEY_SUPABASE}`,
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`,
       'Content-Type': 'application/json'
     },
     body: '{}'
   });
 
-  geojsonDepartamentos = await r.json();
+  geojsonBase = await r.json();
 
-  geojsonDepartamentos.features.forEach(f => {
-    listaDepartamentos.add(f.properties.departamento);
-    listaProvincias.add(f.properties.provincia);
+  geojsonBase.features.forEach(f => {
     f.properties.nivel = clasificar(f.properties.porcentaje).nivel;
   });
 
-  crearCapas(geojsonDepartamentos);
-  map.fitBounds(departamentosLayer.getBounds());
+  crearCapas(geojsonBase);
+  map.fitBounds(layerDepartamentos.getBounds());
 }
 
 // ======================================================
-// CREAR CAPAS DESDE DATA
+// CREAR CAPAS
 // ======================================================
 function crearCapas(data) {
-  if (departamentosLayer) map.removeLayer(departamentosLayer);
-  if (puntosLayer) map.removeLayer(puntosLayer);
+  if (layerDepartamentos) map.removeLayer(layerDepartamentos);
+  if (layerPuntos) map.removeLayer(layerPuntos);
 
-  departamentosLayer = L.geoJSON(data, {
+  layerDepartamentos = L.geoJSON(data, {
     style: f => {
       const c = clasificar(f.properties.porcentaje);
       return {
@@ -108,10 +101,17 @@ function crearCapas(data) {
         fillColor: c.color,
         fillOpacity: 0.5
       };
+    },
+    onEachFeature: (f, l) => {
+      l.bindPopup(`
+        <b>${f.properties.departamento}</b><br>
+        Provincia: ${f.properties.provincia}<br>
+        % Extranjeros: ${f.properties.porcentaje.toFixed(2)}%
+      `);
     }
   });
 
-  puntosLayer = L.geoJSON(data, {
+  layerPuntos = L.geoJSON(data, {
     coordsToLatLng: g => centroide(g.coordinates),
     pointToLayer: (f, latlng) => {
       const c = clasificar(f.properties.porcentaje);
@@ -126,60 +126,37 @@ function crearCapas(data) {
   });
 
   if (departamentosVisibles) {
-    departamentosLayer.addTo(map);
-    puntosLayer.addTo(map);
+    layerDepartamentos.addTo(map);
+    layerPuntos.addTo(map);
   }
 }
 
 // ======================================================
-// PROVINCIAS
-// ======================================================
-async function cargarProvincias() {
-  const r = await fetch(`${URL_SUPABASE}/rest/v1/rpc/get_provincias_geojson`, {
-    method: 'POST',
-    headers: {
-      apikey: API_KEY_SUPABASE,
-      Authorization: `Bearer ${API_KEY_SUPABASE}`,
-      'Content-Type': 'application/json'
-    },
-    body: '{}'
-  });
-
-  const gj = await r.json();
-
-  provinciasLayer = L.geoJSON(gj, {
-    style: { color: '#f97316', weight: 2, fillOpacity: 0 }
-  });
-}
-
-// ======================================================
-// TOGGLE CAPAS
+// BOTÓN DEPARTAMENTOS
 // ======================================================
 function toggleCapa(tipo) {
-  if (tipo === 'departamentos') {
-    departamentosVisibles = !departamentosVisibles;
-    departamentosVisibles
-      ? (departamentosLayer.addTo(map), puntosLayer.addTo(map))
-      : (map.removeLayer(departamentosLayer), map.removeLayer(puntosLayer));
-  }
+  if (tipo !== 'departamentos') return;
 
-  if (tipo === 'provincias') {
-    provinciasVisibles = !provinciasVisibles;
-    provinciasVisibles
-      ? provinciasLayer.addTo(map)
-      : map.removeLayer(provinciasLayer);
+  departamentosVisibles = !departamentosVisibles;
+
+  if (departamentosVisibles) {
+    layerDepartamentos.addTo(map);
+    layerPuntos.addTo(map);
+  } else {
+    map.removeLayer(layerDepartamentos);
+    map.removeLayer(layerPuntos);
   }
 }
 
 // ======================================================
-// FILTROS
+// BUSCAR
 // ======================================================
 function aplicarFiltros() {
   const prov = document.getElementById('filtroProvincia').value.toLowerCase();
   const depto = document.getElementById('filtroDepartamento').value.toLowerCase();
   const nivel = document.getElementById('filtroNivel').value;
 
-  const filtrado = geojsonDepartamentos.features.filter(f => {
+  const filtrado = geojsonBase.features.filter(f => {
     const p = f.properties;
     if (prov && !p.provincia.toLowerCase().includes(prov)) return false;
     if (depto && !p.departamento.toLowerCase().includes(depto)) return false;
@@ -190,7 +167,7 @@ function aplicarFiltros() {
   crearCapas({ type: 'FeatureCollection', features: filtrado });
 
   if (filtrado.length) {
-    map.fitBounds(departamentosLayer.getBounds());
+    map.fitBounds(layerDepartamentos.getBounds());
   }
 }
 
@@ -202,5 +179,5 @@ function limpiarFiltros() {
   document.getElementById('filtroDepartamento').value = '';
   document.getElementById('filtroNivel').value = '';
 
-  crearCapas(geojsonDepartamentos);
+  crearCapas(geojsonBase);
 }
