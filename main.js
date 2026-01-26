@@ -80,6 +80,13 @@ async function cargarDepartamentos() {
 
   const gj = await r.json();
 
+  geojson.features.forEach(f => {
+  if (f.properties.porcentaje === null) {
+    f.properties.porcentaje = 0;
+  }
+  });
+
+
   departamentosLayer = L.geoJSON(gj, {
     style: f => {
       const c = clasificar(f.properties.porcentaje || 0);
@@ -241,3 +248,4 @@ function limpiarFiltros() {
 
   map.fitBounds(departamentosLayer.getBounds());
 }
+
