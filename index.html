@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Geoportal - Extranjerización de Tierras</title>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Estilos -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Loader -->
+  <div class="cargando" id="cargando">
+    <div class="spinner"></div>
+    <div class="loading-text">Cargando geoportal...</div>
+  </div>
+
+  <!-- Panel superior -->
+  <header class="controls">
+    <div class="titulo">🌍 Geoportal · Extranjerización</div>
+
+    <div class="filtros-container">
+
+      <div class="filtro-grupo">
+        <label>Provincia</label>
+        <input
+          type="text"
+          id="filtroProvincia"
+          placeholder="Ej: Buenos Aires"
+          oninput="mostrarAutocomplete('provincia')"
+        />
+        <div id="autocomplete-provincia" class="autocomplete-list"></div>
+      </div>
+
+      <div class="filtro-grupo">
+        <label>Departamento</label>
+        <input
+          type="text"
+          id="filtroDepartamento"
+          placeholder="Ej: San Martín"
+          oninput="mostrarAutocomplete('departamento')"
+        />
+        <div id="autocomplete-departamento" class="autocomplete-list"></div>
+      </div>
+
+      <div class="filtro-grupo">
+        <label>Nivel</label>
+        <select id="filtroNivel">
+          <option value="">Todos</option>
+          <option value="alto">Alto (&gt;10%)</option>
+          <option value="medio">Medio (6–10%)</option>
+          <option value="bajo">Bajo (&lt;6%)</option>
+        </select>
+      </div>
+
+      <div class="botones-capas">
+        <button id="btnProvincias" class="capa-btn" onclick="toggleCapa('provincias')">
+          Provincias
+        </button>
+        <button id="btnDepartamentos" class="capa-btn active" onclick="toggleCapa('departamentos')">
+          Departamentos
+        </button>
+      </div>
+
+      <div class="botones-filtro">
+        <button id="buscarBtn" onclick="aplicarFiltros()">Buscar</button>
+        <button id="limpiarBtn" onclick="limpiarFiltros()">Limpiar</button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Estado -->
+  <div id="status"></div>
+
+  <!-- Leyenda -->
+  <aside class="leyenda">
+    <div class="leyenda-titulo">📋 Leyenda</div>
+
+    <div class="leyenda-item">
+      <span class="leyenda-color alto"></span> Alto (&gt;10%)
+    </div>
+    <div class="leyenda-item">
+      <span class="leyenda-color medio"></span> Medio (6–10%)
+    </div>
+    <div class="leyenda-item">
+      <span class="leyenda-color bajo"></span> Bajo (&lt;6%)
+    </div>
+  </aside>
+
+  <!-- Mapa -->
+  <main id="map"></main>
+
+  <!-- JS principal -->
+  <script src="main.js"></script>
+</body>
+</html>
