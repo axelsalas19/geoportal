@@ -473,8 +473,14 @@ function mostrarAutocomplete(tipo) {
   );
   
   if (resultados.length > 0) {
+    // Posicionar el autocomplete debajo del input
+    const rect = input.getBoundingClientRect();
+    autocompleteDiv.style.top = (rect.bottom + 2) + 'px';
+    autocompleteDiv.style.left = rect.left + 'px';
+    autocompleteDiv.style.width = rect.width + 'px';
+    
     autocompleteDiv.innerHTML = '';
-    resultados.slice(0, 8).forEach(item => {
+    resultados.slice(0, 10).forEach(item => {
       const div = document.createElement('div');
       div.className = 'autocomplete-item';
       div.textContent = item;
