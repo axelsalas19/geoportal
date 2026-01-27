@@ -161,6 +161,7 @@ async function cargarDepartamentos() {
         let popup = `<div style="padding: 8px; font-family: 'Segoe UI', sans-serif; max-width: 300px;">
           <h4 style="color: #2d3748; margin-bottom: 8px;">${props.nombre || props.nam || 'Sin nombre'}</h4>`;
         
+        if (props.provincia) popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Provincia:</strong> ${props.provincia}</p>`;
         if (props.fna) popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Partido:</strong> ${props.fna}</p>`;
         if (props.sup_rural !== undefined && props.sup_rural !== null) {
           popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Sup. rural:</strong> ${props.sup_rural.toLocaleString()} ha</p>`;
@@ -186,6 +187,9 @@ async function cargarDepartamentos() {
         popup += `</div>`;
         
         layer.bindPopup(popup);
+        
+        // Guardar nombre de provincia en el layer para filtrado
+        layer.nombreProvincia = (props.provincia || '').toLowerCase();
         
         layer.on('mouseover', function() {
           this.setStyle({ 
@@ -231,6 +235,7 @@ async function cargarDepartamentos() {
             properties: {
               nombre: props.nombre || props.nam || 'Sin nombre',
               fna: props.fna || '',
+              provincia: props.provincia || '',
               porcentaje: porcentaje,
               color: color,
               nivel: nivel
@@ -265,12 +270,16 @@ async function cargarDepartamentos() {
         let popup = `<div style="padding: 8px; font-family: 'Segoe UI', sans-serif;">
           <h4 style="color: #2d3748; margin-bottom: 8px;">${props.nombre}</h4>`;
         
+        if (props.provincia) popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Provincia:</strong> ${props.provincia}</p>`;
         if (props.fna) popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Partido:</strong> ${props.fna}</p>`;
         if (props.porcentaje !== undefined && props.porcentaje !== null) {
           popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>% extranjeros:</strong> ${props.porcentaje.toFixed(2)}%</p>`;
         }
         popup += `</div>`;
         layer.bindPopup(popup);
+        
+        // Guardar nombre de provincia en el layer para filtrado
+        layer.nombreProvincia = (props.provincia || '').toLowerCase();
       }
     });
 
@@ -559,6 +568,7 @@ function aplicarFiltros() {
     departamentosLayer.eachLayer(function(layer) {
       const props = layer.feature.properties;
       const nombre = (props.nombre || props.nam || '').toLowerCase();
+      const nombreProvinciaDepto = layer.nombreProvincia || '';
       const porcentaje = props.porcentaje || 0;
       let nivel = 'bajo';
       if (porcentaje > 10) nivel = 'alto';
@@ -566,10 +576,17 @@ function aplicarFiltros() {
       
       let mostrarDepto = true;
       
+      // Filtrar por provincia
+      if (filtroProvincia && !nombreProvinciaDepto.includes(filtroProvincia)) {
+        mostrarDepto = false;
+      }
+      
+      // Filtrar por departamento
       if (filtroDepto && !nombre.includes(filtroDepto)) {
         mostrarDepto = false;
       }
       
+      // Filtrar por nivel
       if (filtroNivel && nivel !== filtroNivel) {
         mostrarDepto = false;
       }
@@ -596,14 +613,22 @@ function aplicarFiltros() {
     puntosLayer.eachLayer(function(layer) {
       const props = layer.feature.properties;
       const nombre = (props.nombre || '').toLowerCase();
+      const nombreProvinciaPoint = layer.nombreProvincia || '';
       const nivel = props.nivel || 'bajo';
       
       let mostrarPunto = true;
       
+      // Filtrar por provincia
+      if (filtroProvincia && !nombreProvinciaPoint.includes(filtroProvincia)) {
+        mostrarPunto = false;
+      }
+      
+      // Filtrar por departamento
       if (filtroDepto && !nombre.includes(filtroDepto)) {
         mostrarPunto = false;
       }
       
+      // Filtrar por nivel
       if (filtroNivel && nivel !== filtroNivel) {
         mostrarPunto = false;
       }
