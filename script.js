@@ -9,6 +9,7 @@ let provinciasLayer = null;
 let puntosLayer = null;
 let listaProvincias = new Set();
 let listaDepartamentos = new Set();
+let provinciasData = null; // Guardar datos de provincias para matching
 
 // Estados de las capas
 let provinciasCargadas = false;
@@ -26,13 +27,16 @@ async function inicializarAplicacion() {
     // 1. Inicializar mapa
     inicializarMapa();
     
-    // 2. Cargar departamentos inmediatamente
+    // 2. Cargar provincias primero (son más rápidas y necesarias para el matching)
+    await cargarProvinciasParaMatching();
+    
+    // 3. Cargar departamentos
     await cargarDepartamentos();
     
-    // 3. Cargar provincias en segundo plano
-    cargarProvinciasEnSegundoPlano();
+    // 4. Cargar provincias como capa visible
+    cargarProvinciasCapaEnSegundoPlano();
     
-    // 4. Ocultar pantalla de carga
+    // 5. Ocultar pantalla de carga
     setTimeout(() => {
       document.getElementById('cargando').style.display = 'none';
     }, 500);
@@ -114,6 +118,62 @@ function calcularCentroide(coords) {
   return [0, 0];
 }
 
+// Función para encontrar provincia que contiene un punto (simple check por bounds)
+function encontrarProvincia(latlng) {
+  if (!provinciasData || !provinciasData.features) return 'Sin provincia';
+  
+  try {
+    for (let feature of provinciasData.features) {
+      const layer = L.geoJSON(feature);
+      const bounds = layer.getBounds();
+      
+      // Verificación simple por bounds (suficiente para la mayoría de casos)
+      if (bounds.contains(latlng)) {
+        return feature.properties.nombre || feature.properties.nam || feature.properties.fna || 'Sin provincia';
+      }
+    }
+  } catch (e) {
+    console.warn('Error buscando provincia:', e);
+  }
+  
+  return 'Sin provincia';
+}
+
+async function cargarProvinciasParaMatching() {
+  try {
+    const res = await fetch(`${URL_SUPABASE}/rest/v1/rpc/get_provincias_geojson`, {
+      method: 'POST',
+      headers: {
+        'apikey': API_KEY_SUPABASE,
+        'Authorization': `Bearer ${API_KEY_SUPABASE}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+      },
+      body: JSON.stringify({})
+    });
+
+    if (!res.ok) {
+      throw new Error(`Error ${res.status}`);
+    }
+
+    provinciasData = await res.json();
+    
+    // Crear lista de provincias
+    if (provinciasData?.features) {
+      provinciasData.features.forEach(feature => {
+        const props = feature.properties;
+        const nombreProvincia = props.nombre || props.nam || props.fna;
+        if (nombreProvincia) {
+          listaProvincias.add(nombreProvincia);
+        }
+      });
+    }
+    
+  } catch (err) {
+    console.error('Error cargando provincias para matching:', err);
+  }
+}
+
 // ===== CARGA DE DATOS =====
 async function cargarDepartamentos() {
   try {
@@ -148,7 +208,7 @@ async function cargarDepartamentos() {
       if (props.nam && !props.nombre) listaDepartamentos.add(props.nam);
     });
 
-    // Crear capa de polígonos de departamentos
+    // Crear capa de polígonos de departamentos con provincia asignada
     departamentosLayer = L.geoJSON(geojson, {
       style: {
         color: '#4a5568',
@@ -158,10 +218,19 @@ async function cargarDepartamentos() {
       },
       onEachFeature: (feature, layer) => {
         const props = feature.properties;
+        
+        // Calcular centroide para encontrar provincia
+        const center = calcularCentroide(feature.geometry.coordinates);
+        const provincia = encontrarProvincia(L.latLng(center[1], center[0]));
+        
+        // Guardar provincia en properties y layer
+        feature.properties.provincia = provincia;
+        layer.nombreProvincia = provincia.toLowerCase();
+        
         let popup = `<div style="padding: 8px; font-family: 'Segoe UI', sans-serif; max-width: 300px;">
           <h4 style="color: #2d3748; margin-bottom: 8px;">${props.nombre || props.nam || 'Sin nombre'}</h4>`;
         
-        if (props.provincia) popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Provincia:</strong> ${props.provincia}</p>`;
+        if (provincia) popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Provincia:</strong> ${provincia}</p>`;
         if (props.fna) popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Partido:</strong> ${props.fna}</p>`;
         if (props.sup_rural !== undefined && props.sup_rural !== null) {
           popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Sup. rural:</strong> ${props.sup_rural.toLocaleString()} ha</p>`;
@@ -187,9 +256,6 @@ async function cargarDepartamentos() {
         popup += `</div>`;
         
         layer.bindPopup(popup);
-        
-        // Guardar nombre de provincia en el layer para filtrado
-        layer.nombreProvincia = (props.provincia || '').toLowerCase();
         
         layer.on('mouseover', function() {
           this.setStyle({ 
@@ -219,6 +285,8 @@ async function cargarDepartamentos() {
         const center = calcularCentroide(feature.geometry.coordinates);
         
         if (center[0] !== 0 && center[1] !== 0) {
+          const provincia = props.provincia || encontrarProvincia(L.latLng(center[1], center[0]));
+          
           let color = '#4CAF50';
           let nivel = 'bajo';
           
@@ -235,7 +303,7 @@ async function cargarDepartamentos() {
             properties: {
               nombre: props.nombre || props.nam || 'Sin nombre',
               fna: props.fna || '',
-              provincia: props.provincia || '',
+              provincia: provincia,
               porcentaje: porcentaje,
               color: color,
               nivel: nivel
@@ -300,46 +368,15 @@ async function cargarDepartamentos() {
   }
 }
 
-async function cargarProvinciasEnSegundoPlano() {
+async function cargarProvinciasCapaEnSegundoPlano() {
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
-    
-    const res = await fetch(`${URL_SUPABASE}/rest/v1/rpc/get_provincias_geojson`, {
-      method: 'POST',
-      headers: {
-        'apikey': API_KEY_SUPABASE,
-        'Authorization': `Bearer ${API_KEY_SUPABASE}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=representation'
-      },
-      body: JSON.stringify({}),
-      signal: controller.signal
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!res.ok) {
-      throw new Error(`Error ${res.status}: ${await res.text()}`);
+    // Los datos ya están cargados en provinciasData
+    if (!provinciasData || !provinciasData.features) {
+      throw new Error('No hay datos de provincias');
     }
-
-    const geojson = await res.json();
-    
-    if (!geojson?.features?.length) {
-      throw new Error('No se encontraron datos de provincias');
-    }
-
-    // Crear lista de provincias para autocompletar
-    geojson.features.forEach(feature => {
-      const props = feature.properties;
-      const nombreProvincia = props.nombre || props.nam || props.fna;
-      if (nombreProvincia) {
-        listaProvincias.add(nombreProvincia);
-      }
-    });
 
     // Crear capa de provincias
-    provinciasLayer = L.geoJSON(geojson, {
+    provinciasLayer = L.geoJSON(provinciasData, {
       style: {
         color: '#ed8936',
         weight: 2,
@@ -355,7 +392,6 @@ async function cargarProvinciasEnSegundoPlano() {
         let popup = `<div style="padding: 8px; font-family: 'Segoe UI', sans-serif;">
           <h4 style="color: #2d3748; margin-bottom: 8px;">${nombreProvincia}</h4>`;
         
-        if (props.codigo) popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Código:</strong> ${props.codigo}</p>`;
         if (props.entidad) popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Entidad:</strong> ${props.entidad}</p>`;
         popup += `</div>`;
         
@@ -379,11 +415,8 @@ async function cargarProvinciasEnSegundoPlano() {
     provinciasCargadas = true;
     
   } catch (err) {
-    console.error('Error cargando provincias:', err);
-    // No mostrar error al usuario, solo cargar dummy si es necesario
-    if (!provinciasCargadas) {
-      crearProvinciasDummy();
-    }
+    console.error('Error creando capa de provincias:', err);
+    crearProvinciasDummy();
   }
 }
 
