@@ -34,12 +34,13 @@ body {
   flex-wrap: wrap;
   border: 1px solid rgba(0,0,0,0.1);
   max-height: 85px;
-  overflow: hidden;
+  overflow: visible; /* Cambiado de hidden a visible */
   transition: max-height 0.3s ease;
 }
 
 .controls:hover {
   max-height: 200px;
+  overflow-y: auto; /* Solo en hover para el panel principal */
 }
 
 .titulo {
@@ -107,7 +108,7 @@ body {
   border-radius: 0 0 8px 8px;
   max-height: 200px;
   overflow-y: auto;
-  z-index: 1001;
+  z-index: 1002; /* Aumentado de 1001 a 1002 */
   display: none;
   box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
@@ -269,6 +270,7 @@ body {
   .controls {
     max-height: 150px;
     overflow-y: auto;
+    overflow-x: hidden;
   }
   
   .controls:hover {
