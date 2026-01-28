@@ -1,22 +1,3 @@
-/* ===== ESTILOS GENERALES ===== */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body { 
-  margin: 0; 
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: #f0f4f8;
-}
-
-#map { 
-  height: 100vh; 
-  width: 100%; 
-  z-index: 1;
-}
-
 /* ===== PANEL DE CONTROLES ===== */
 .controls { 
   position: absolute; 
@@ -29,18 +10,18 @@ body {
   border-radius: 12px;
   box-shadow: 0 5px 20px rgba(0,0,0,0.15);
   display: flex;
-  align-items: center;
+  align-items: flex-start; /* Cambiado de center a flex-start */
   gap: 12px;
   flex-wrap: wrap;
   border: 1px solid rgba(0,0,0,0.1);
-  max-height: 85px;
-  overflow: visible; /* Cambiado de hidden a visible */
-  transition: max-height 0.3s ease;
+  min-height: 85px; /* Cambiado de max-height a min-height */
+  height: auto; /* Asegurar altura automática */
+  overflow: visible; /* Ya estaba bien */
 }
 
+/* Eliminar la transición de max-height que estaba causando problemas */
 .controls:hover {
-  max-height: 200px;
-  overflow-y: auto; /* Solo en hover para el panel principal */
+  /* Eliminamos la animación de max-height */
 }
 
 .titulo {
@@ -58,7 +39,7 @@ body {
 .filtros-container {
   display: flex; 
   gap: 10px; 
-  align-items: center; 
+  align-items: flex-start; /* Cambiado de center a flex-start */
   flex-wrap: wrap;
   flex-grow: 1;
 }
@@ -99,7 +80,7 @@ body {
 /* ===== AUTOCOMPLETADO ===== */
 .autocomplete-list {
   position: absolute;
-  top: 100%;
+  top: 100%; /* Esto ya está bien */
   left: 0;
   right: 0;
   background: white;
@@ -108,9 +89,10 @@ body {
   border-radius: 0 0 8px 8px;
   max-height: 200px;
   overflow-y: auto;
-  z-index: 1002; /* Aumentado de 1001 a 1002 */
+  z-index: 1003; /* Aumentamos aún más */
   display: none;
   box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  margin-top: 0; /* Asegurar que no tenga margen superior */
 }
 
 .autocomplete-item {
@@ -132,6 +114,7 @@ body {
   display: flex; 
   gap: 8px; 
   margin-left: auto;
+  align-items: flex-start; /* Añadido */
 }
 
 .controls button { 
@@ -148,6 +131,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 6px;
+  margin-top: 24px; /* Añadido para alinear con los inputs */
 }
 
 .controls button:hover { 
@@ -268,13 +252,13 @@ body {
 /* ===== RESPONSIVE ===== */
 @media (max-width: 1200px) {
   .controls {
-    max-height: 150px;
-    overflow-y: auto;
-    overflow-x: hidden;
+    min-height: auto;
+    height: auto;
+    overflow-y: visible;
   }
   
   .controls:hover {
-    max-height: 300px;
+    /* Sin cambios */
   }
   
   .filtros-container {
@@ -289,5 +273,9 @@ body {
   
   .leyenda {
     display: none;
+  }
+  
+  .controls button {
+    margin-top: 0; /* Reset en móvil */
   }
 }
