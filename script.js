@@ -5,15 +5,10 @@ const API_KEY_SUPABASE = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhY
 // ===== VARIABLES GLOBALES =====
 let map = null;
 let departamentosLayer = null;
-let provinciasLayer = null;
 let puntosLayer = null;
 let listaProvincias = new Set();
 let listaDepartamentos = new Set();
-
-// Estados de las capas
-let provinciasCargadas = false;
 let departamentosCargados = false;
-let provinciasVisibles = false;
 let departamentosVisibles = true;
 
 // ===== INICIALIZACIÓN =====
@@ -29,10 +24,7 @@ async function inicializarAplicacion() {
     // 2. Cargar departamentos inmediatamente
     await cargarDepartamentos();
     
-    // 3. Cargar provincias en segundo plano
-    cargarProvinciasEnSegundoPlano();
-    
-    // 4. Ocultar pantalla de carga
+    // 3. Ocultar pantalla de carga
     setTimeout(() => {
       document.getElementById('cargando').style.display = 'none';
     }, 500);
@@ -141,11 +133,15 @@ async function cargarDepartamentos() {
       throw new Error('No se encontraron datos de departamentos');
     }
 
-    // Crear listas para autocompletar
+    // Crear listas para autocompletar desde departamentos
     geojson.features.forEach(feature => {
       const props = feature.properties;
+      // Lista de departamentos
       if (props.nombre) listaDepartamentos.add(props.nombre);
       if (props.nam && !props.nombre) listaDepartamentos.add(props.nam);
+      
+      // Lista de provincias desde el campo "prov" de departamentos
+      if (props.prov) listaProvincias.add(props.prov);
     });
 
     // Crear capa de polígonos de departamentos
@@ -161,6 +157,7 @@ async function cargarDepartamentos() {
         let popup = `<div style="padding: 8px; font-family: 'Segoe UI', sans-serif; max-width: 300px;">
           <h4 style="color: #2d3748; margin-bottom: 8px;">${props.nombre || props.nam || 'Sin nombre'}</h4>`;
         
+        if (props.prov) popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Provincia:</strong> ${props.prov}</p>`;
         if (props.fna) popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Partido:</strong> ${props.fna}</p>`;
         if (props.sup_rural !== undefined && props.sup_rural !== null) {
           popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Sup. rural:</strong> ${props.sup_rural.toLocaleString()} ha</p>`;
@@ -230,6 +227,7 @@ async function cargarDepartamentos() {
             type: 'Feature',
             properties: {
               nombre: props.nombre || props.nam || 'Sin nombre',
+              prov: props.prov || '',
               fna: props.fna || '',
               porcentaje: porcentaje,
               color: color,
@@ -265,6 +263,7 @@ async function cargarDepartamentos() {
         let popup = `<div style="padding: 8px; font-family: 'Segoe UI', sans-serif;">
           <h4 style="color: #2d3748; margin-bottom: 8px;">${props.nombre}</h4>`;
         
+        if (props.prov) popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Provincia:</strong> ${props.prov}</p>`;
         if (props.fna) popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Partido:</strong> ${props.fna}</p>`;
         if (props.porcentaje !== undefined && props.porcentaje !== null) {
           popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>% extranjeros:</strong> ${props.porcentaje.toFixed(2)}%</p>`;
@@ -291,137 +290,9 @@ async function cargarDepartamentos() {
   }
 }
 
-async function cargarProvinciasEnSegundoPlano() {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
-    
-    const res = await fetch(`${URL_SUPABASE}/rest/v1/rpc/get_provincias_geojson`, {
-      method: 'POST',
-      headers: {
-        'apikey': API_KEY_SUPABASE,
-        'Authorization': `Bearer ${API_KEY_SUPABASE}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=representation'
-      },
-      body: JSON.stringify({}),
-      signal: controller.signal
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!res.ok) {
-      throw new Error(`Error ${res.status}: ${await res.text()}`);
-    }
-
-    const geojson = await res.json();
-    
-    if (!geojson?.features?.length) {
-      throw new Error('No se encontraron datos de provincias');
-    }
-
-    // Crear lista de provincias para autocompletar
-    geojson.features.forEach(feature => {
-      const props = feature.properties;
-      const nombreProvincia = props.nombre || props.nam || props.fna;
-      if (nombreProvincia) {
-        listaProvincias.add(nombreProvincia);
-      }
-    });
-
-    // Crear capa de provincias
-    provinciasLayer = L.geoJSON(geojson, {
-      style: {
-        color: '#ed8936',
-        weight: 2,
-        fillColor: '#ffffff',
-        fillOpacity: 0
-      },
-      onEachFeature: (feature, layer) => {
-        const props = feature.properties;
-        const nombreProvincia = props.nombre || props.nam || props.fna || 'Sin nombre';
-        
-        layer.provinciaNombre = nombreProvincia;
-        
-        let popup = `<div style="padding: 8px; font-family: 'Segoe UI', sans-serif;">
-          <h4 style="color: #2d3748; margin-bottom: 8px;">${nombreProvincia}</h4>`;
-        
-        if (props.codigo) popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Código:</strong> ${props.codigo}</p>`;
-        if (props.entidad) popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Entidad:</strong> ${props.entidad}</p>`;
-        popup += `</div>`;
-        
-        layer.bindPopup(popup);
-        
-        layer.on('mouseover', function() {
-          this.setStyle({ 
-            color: '#dd6b20',
-            weight: 3 
-          });
-        });
-        layer.on('mouseout', function() {
-          this.setStyle({ 
-            color: '#ed8936',
-            weight: 2 
-          });
-        });
-      }
-    });
-
-    provinciasCargadas = true;
-    
-  } catch (err) {
-    console.error('Error cargando provincias:', err);
-    // No mostrar error al usuario, solo cargar dummy si es necesario
-    if (!provinciasCargadas) {
-      crearProvinciasDummy();
-    }
-  }
-}
-
-function crearProvinciasDummy() {
-  const provinciasDummy = {
-    "type": "FeatureCollection",
-    "features": []
-  };
-  
-  provinciasLayer = L.geoJSON(provinciasDummy, {
-    style: {
-      color: '#ed8936',
-      weight: 2,
-      fillColor: '#ffffff',
-      fillOpacity: 0
-    }
-  });
-  
-  provinciasCargadas = true;
-}
-
 // ===== CONTROL DE CAPAS =====
 function toggleCapa(tipo) {
-  if (tipo === 'provincias') {
-    provinciasVisibles = !provinciasVisibles;
-    const btn = document.getElementById('btnProvincias');
-    btn.classList.toggle('active', provinciasVisibles);
-    
-    if (provinciasVisibles) {
-      if (provinciasLayer && provinciasCargadas) {
-        provinciasLayer.addTo(map);
-      } else if (!provinciasCargadas) {
-        mostrarEstado('Cargando provincias...', 'info');
-        cargarProvinciasEnSegundoPlano().then(() => {
-          if (provinciasLayer && provinciasVisibles) {
-            provinciasLayer.addTo(map);
-            mostrarEstado('Provincias cargadas', 'success');
-          }
-        });
-      }
-    } else {
-      if (provinciasLayer) {
-        map.removeLayer(provinciasLayer);
-      }
-    }
-    
-  } else if (tipo === 'departamentos') {
+  if (tipo === 'departamentos') {
     departamentosVisibles = !departamentosVisibles;
     const btn = document.getElementById('btnDepartamentos');
     btn.classList.toggle('active', departamentosVisibles);
@@ -430,9 +301,7 @@ function toggleCapa(tipo) {
       if (departamentosLayer && departamentosCargados) {
         departamentosLayer.addTo(map);
         if (puntosLayer) puntosLayer.addTo(map);
-        if (!provinciasVisibles) {
-          map.fitBounds(departamentosLayer.getBounds());
-        }
+        map.fitBounds(departamentosLayer.getBounds());
       } else if (!departamentosCargados) {
         mostrarEstado('Cargando departamentos...', 'info');
         cargarDepartamentos();
@@ -503,41 +372,8 @@ function aplicarFiltros() {
     list.style.display = 'none';
   });
   
-  let provinciaEncontrada = false;
-  let boundsProvincia = null;
-  let totalProvinciasFiltradas = 0;
   let totalDepartamentosFiltrados = 0;
   let boundsDepartamentos = null;
-  
-  // ===== FILTRAR PROVINCIAS =====
-  if (provinciasLayer && provinciasCargadas) {
-    provinciasLayer.eachLayer(function(layer) {
-      const nombreProvincia = (layer.provinciaNombre || '').toLowerCase();
-      let mostrarProvincia = true;
-      
-      if (filtroProvincia && !nombreProvincia.includes(filtroProvincia)) {
-        mostrarProvincia = false;
-      }
-      
-      if (mostrarProvincia) {
-        totalProvinciasFiltradas++;
-        
-        if (provinciasVisibles) {
-          map.addLayer(layer);
-        }
-        
-        if (filtroProvincia && (nombreProvincia === filtroProvincia.toLowerCase() || 
-            layer.provinciaNombre.toLowerCase() === filtroProvincia.toLowerCase())) {
-          provinciaEncontrada = true;
-          boundsProvincia = layer.getBounds();
-        }
-      } else {
-        if (provinciasVisibles) {
-          map.removeLayer(layer);
-        }
-      }
-    });
-  }
   
   // ===== FILTRAR DEPARTAMENTOS =====
   if (departamentosLayer && puntosLayer && departamentosCargados) {
@@ -553,6 +389,7 @@ function aplicarFiltros() {
     departamentosLayer.eachLayer(function(layer) {
       const props = layer.feature.properties;
       const nombre = (props.nombre || props.nam || '').toLowerCase();
+      const provincia = (props.prov || '').toLowerCase();
       const porcentaje = props.porcentaje || 0;
       let nivel = 'bajo';
       if (porcentaje > 10) nivel = 'alto';
@@ -560,10 +397,17 @@ function aplicarFiltros() {
       
       let mostrarDepto = true;
       
+      // Filtro por provincia usando el campo "prov"
+      if (filtroProvincia && !provincia.includes(filtroProvincia)) {
+        mostrarDepto = false;
+      }
+      
+      // Filtro por departamento
       if (filtroDepto && !nombre.includes(filtroDepto)) {
         mostrarDepto = false;
       }
       
+      // Filtro por nivel
       if (filtroNivel && nivel !== filtroNivel) {
         mostrarDepto = false;
       }
@@ -590,14 +434,22 @@ function aplicarFiltros() {
     puntosLayer.eachLayer(function(layer) {
       const props = layer.feature.properties;
       const nombre = (props.nombre || '').toLowerCase();
+      const provincia = (props.prov || '').toLowerCase();
       const nivel = props.nivel || 'bajo';
       
       let mostrarPunto = true;
       
+      // Filtro por provincia
+      if (filtroProvincia && !provincia.includes(filtroProvincia)) {
+        mostrarPunto = false;
+      }
+      
+      // Filtro por departamento
       if (filtroDepto && !nombre.includes(filtroDepto)) {
         mostrarPunto = false;
       }
       
+      // Filtro por nivel
       if (filtroNivel && nivel !== filtroNivel) {
         mostrarPunto = false;
       }
@@ -614,14 +466,7 @@ function aplicarFiltros() {
   let mensaje = '';
   let tipoMensaje = 'success';
   
-  if (provinciaEncontrada && boundsProvincia) {
-    map.fitBounds(boundsProvincia, { padding: [50, 50], maxZoom: 10 });
-    mensaje = `Mostrando provincia: ${filtroProvincia}`;
-    
-    if (totalDepartamentosFiltrados > 0) {
-      mensaje += ` y ${totalDepartamentosFiltrados} departamento(s)`;
-    }
-  } else if (boundsDepartamentos && totalDepartamentosFiltrados > 0) {
+  if (boundsDepartamentos && totalDepartamentosFiltrados > 0) {
     if (totalDepartamentosFiltrados === 1) {
       map.fitBounds(boundsDepartamentos, { padding: [100, 100], maxZoom: 12 });
     } else {
@@ -629,20 +474,11 @@ function aplicarFiltros() {
     }
     
     mensaje = `Mostrando ${totalDepartamentosFiltrados} departamento(s)`;
-    
-    if (totalProvinciasFiltradas > 0) {
-      mensaje += ` y ${totalProvinciasFiltradas} provincia(s)`;
+    if (filtroProvincia) {
+      mensaje += ` en ${filtroProvincia}`;
     }
-  } else if (totalProvinciasFiltradas > 0) {
-    if (provinciasLayer && provinciasVisibles && provinciasCargadas) {
-      const bounds = provinciasLayer.getBounds();
-      if (bounds.isValid()) {
-        map.fitBounds(bounds, { padding: [50, 50] });
-      }
-    }
-    mensaje = `Mostrando ${totalProvinciasFiltradas} provincia(s)`;
   } else if (!filtroProvincia && !filtroDepto && !filtroNivel) {
-    mensaje = 'Mostrando todas las capas';
+    mensaje = 'Mostrando todos los departamentos';
   } else {
     mensaje = 'No se encontraron resultados con los filtros aplicados';
     tipoMensaje = 'error';
