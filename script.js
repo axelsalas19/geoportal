@@ -8,8 +8,6 @@ let departamentosLayer = null;
 let puntosLayer = null;
 let listaProvincias = new Set();
 let listaDepartamentos = new Set();
-let departamentosCargados = false;
-let departamentosVisibles = true;
 
 // ===== INICIALIZACIÓN =====
 document.addEventListener('DOMContentLoaded', function() {
@@ -21,7 +19,7 @@ async function inicializarAplicacion() {
     // 1. Inicializar mapa
     inicializarMapa();
     
-    // 2. Cargar departamentos inmediatamente
+    // 2. Cargar departamentos
     await cargarDepartamentos();
     
     // 3. Ocultar pantalla de carga
@@ -136,11 +134,12 @@ async function cargarDepartamentos() {
     // Crear listas para autocompletar desde departamentos
     geojson.features.forEach(feature => {
       const props = feature.properties;
-      // Lista de departamentos
-      if (props.nombre) listaDepartamentos.add(props.nombre);
-      if (props.nam && !props.nombre) listaDepartamentos.add(props.nam);
       
-      // Lista de provincias desde el campo "prov" de departamentos
+      // Lista de departamentos usando "nam"
+      if (props.nam) listaDepartamentos.add(props.nam);
+      if (props.nombre && !props.nam) listaDepartamentos.add(props.nombre);
+      
+      // Lista de provincias desde el campo "prov"
       if (props.prov) listaProvincias.add(props.prov);
     });
 
@@ -155,7 +154,7 @@ async function cargarDepartamentos() {
       onEachFeature: (feature, layer) => {
         const props = feature.properties;
         let popup = `<div style="padding: 8px; font-family: 'Segoe UI', sans-serif; max-width: 300px;">
-          <h4 style="color: #2d3748; margin-bottom: 8px;">${props.nombre || props.nam || 'Sin nombre'}</h4>`;
+          <h4 style="color: #2d3748; margin-bottom: 8px;">${props.nam || props.nombre || 'Sin nombre'}</h4>`;
         
         if (props.prov) popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Provincia:</strong> ${props.prov}</p>`;
         if (props.fna) popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Partido:</strong> ${props.fna}</p>`;
@@ -226,7 +225,7 @@ async function cargarDepartamentos() {
           puntosFeatures.push({
             type: 'Feature',
             properties: {
-              nombre: props.nombre || props.nam || 'Sin nombre',
+              nombre: props.nam || props.nombre || 'Sin nombre',
               prov: props.prov || '',
               fna: props.fna || '',
               porcentaje: porcentaje,
@@ -273,14 +272,10 @@ async function cargarDepartamentos() {
       }
     });
 
-    departamentosCargados = true;
-    
-    // Mostrar departamentos inmediatamente
-    if (departamentosVisibles) {
-      departamentosLayer.addTo(map);
-      puntosLayer.addTo(map);
-      map.fitBounds(departamentosLayer.getBounds());
-    }
+    // Mostrar capas en el mapa
+    departamentosLayer.addTo(map);
+    puntosLayer.addTo(map);
+    map.fitBounds(departamentosLayer.getBounds());
     
     mostrarEstado('Departamentos cargados', 'success');
     
@@ -288,32 +283,6 @@ async function cargarDepartamentos() {
     console.error('Error cargando departamentos:', err);
     mostrarEstado('Error cargando departamentos', 'error');
   }
-}
-
-// ===== CONTROL DE CAPAS =====
-function toggleCapa(tipo) {
-  if (tipo === 'departamentos') {
-    departamentosVisibles = !departamentosVisibles;
-    const btn = document.getElementById('btnDepartamentos');
-    btn.classList.toggle('active', departamentosVisibles);
-    
-    if (departamentosVisibles) {
-      if (departamentosLayer && departamentosCargados) {
-        departamentosLayer.addTo(map);
-        if (puntosLayer) puntosLayer.addTo(map);
-        map.fitBounds(departamentosLayer.getBounds());
-      } else if (!departamentosCargados) {
-        mostrarEstado('Cargando departamentos...', 'info');
-        cargarDepartamentos();
-      }
-    } else {
-      if (departamentosLayer) map.removeLayer(departamentosLayer);
-      if (puntosLayer) map.removeLayer(puntosLayer);
-    }
-  }
-  
-  // Aplicar filtros actuales después de cambiar capa
-  aplicarFiltros();
 }
 
 // ===== AUTOCOMPLETADO =====
@@ -362,7 +331,7 @@ function mostrarAutocomplete(tipo) {
 
 // ===== FILTROS =====
 function aplicarFiltros() {
-  // Obtener valores de los 3 filtros
+  // Obtener valores de los filtros
   const filtroProvincia = document.getElementById('filtroProvincia').value.toLowerCase().trim();
   const filtroDepto = document.getElementById('filtroDepartamento').value.toLowerCase().trim();
   const filtroNivel = document.getElementById('filtroNivel').value;
@@ -376,19 +345,11 @@ function aplicarFiltros() {
   let boundsDepartamentos = null;
   
   // ===== FILTRAR DEPARTAMENTOS =====
-  if (departamentosLayer && puntosLayer && departamentosCargados) {
-    // Mostrar todos primero
-    departamentosLayer.eachLayer(layer => {
-      if (departamentosVisibles) map.addLayer(layer);
-    });
-    puntosLayer.eachLayer(layer => {
-      if (departamentosVisibles) map.addLayer(layer);
-    });
-    
+  if (departamentosLayer && puntosLayer) {
     // Aplicar filtros a departamentos
     departamentosLayer.eachLayer(function(layer) {
       const props = layer.feature.properties;
-      const nombre = (props.nombre || props.nam || '').toLowerCase();
+      const nombre = (props.nam || props.nombre || '').toLowerCase();
       const provincia = (props.prov || '').toLowerCase();
       const porcentaje = props.porcentaje || 0;
       let nivel = 'bajo';
@@ -402,7 +363,7 @@ function aplicarFiltros() {
         mostrarDepto = false;
       }
       
-      // Filtro por departamento
+      // Filtro por departamento usando el campo "nam"
       if (filtroDepto && !nombre.includes(filtroDepto)) {
         mostrarDepto = false;
       }
@@ -414,19 +375,15 @@ function aplicarFiltros() {
       
       if (mostrarDepto) {
         totalDepartamentosFiltrados++;
+        map.addLayer(layer);
         
-        if (departamentosVisibles) {
-          map.addLayer(layer);
-          if (!boundsDepartamentos) {
-            boundsDepartamentos = layer.getBounds();
-          } else {
-            boundsDepartamentos.extend(layer.getBounds());
-          }
+        if (!boundsDepartamentos) {
+          boundsDepartamentos = layer.getBounds();
+        } else {
+          boundsDepartamentos.extend(layer.getBounds());
         }
       } else {
-        if (departamentosVisibles) {
-          map.removeLayer(layer);
-        }
+        map.removeLayer(layer);
       }
     });
     
@@ -454,9 +411,9 @@ function aplicarFiltros() {
         mostrarPunto = false;
       }
       
-      if (mostrarPunto && departamentosVisibles) {
+      if (mostrarPunto) {
         map.addLayer(layer);
-      } else if (departamentosVisibles) {
+      } else {
         map.removeLayer(layer);
       }
     });
@@ -479,6 +436,9 @@ function aplicarFiltros() {
     }
   } else if (!filtroProvincia && !filtroDepto && !filtroNivel) {
     mensaje = 'Mostrando todos los departamentos';
+    if (departamentosLayer) {
+      map.fitBounds(departamentosLayer.getBounds());
+    }
   } else {
     mensaje = 'No se encontraron resultados con los filtros aplicados';
     tipoMensaje = 'error';

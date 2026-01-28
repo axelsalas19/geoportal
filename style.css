@@ -133,14 +133,6 @@ body {
   margin-left: auto;
 }
 
-.botones-capas {
-  display: flex; 
-  gap: 8px;
-  background: #f7fafc;
-  padding: 4px;
-  border-radius: 8px;
-}
-
 .controls button { 
   padding: 8px 16px; 
   color: white; 
@@ -177,25 +169,6 @@ body {
 
 .controls button#limpiarBtn:hover { 
   background: linear-gradient(90deg, #e53e3e, #c53030);
-}
-
-.controls button.capa-btn { 
-  background: white;
-  color: #4a5568;
-  padding: 6px 12px;
-  border: 1.5px solid #e2e8f0;
-  min-width: 110px;
-}
-
-.controls button.capa-btn:hover { 
-  background: #f7fafc;
-  border-color: #cbd5e0;
-}
-
-.controls button#btnDepartamentos.active { 
-  background: linear-gradient(90deg, #38a169, #2f855a);
-  color: white;
-  border-color: #38a169;
 }
 
 /* ===== BARRA DE ESTADO ===== */
@@ -306,7 +279,7 @@ body {
     flex-direction: column;
   }
   
-  .botones-filtro, .botones-capas {
+  .botones-filtro {
     margin-left: 0;
     width: 100%;
     justify-content: center;

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Geoportal - Extranjerización de Tierras</title>
+  <title>Geoportal - Extranjerización de Tierras Rurales</title>
   
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
@@ -21,18 +21,18 @@
 
   <!-- Panel de controles -->
   <div class="controls">
-    <div class="titulo">🌎 Geoportal - Extranjerización</div>
+    <div class="titulo">🌎 Geoportal - Extranjerización de Tierras Rurales</div>
     
     <div class="filtros-container" id="filtrosContainer">
       <div class="filtro-grupo">
         <label>Provincia:</label>
-        <input type="text" id="filtroProvincia" placeholder="Ej: Buenos Aires" oninput="mostrarAutocomplete('provincia')">
+        <input type="text" id="filtroProvincia" placeholder="Ej: Neuquén" oninput="mostrarAutocomplete('provincia')">
         <div id="autocomplete-provincia" class="autocomplete-list"></div>
       </div>
       
       <div class="filtro-grupo">
         <label>Departamento:</label>
-        <input type="text" id="filtroDepartamento" placeholder="Ej: San Martín" oninput="mostrarAutocomplete('departamento')">
+        <input type="text" id="filtroDepartamento" placeholder="Ej: Bariloche" oninput="mostrarAutocomplete('departamento')">
         <div id="autocomplete-departamento" class="autocomplete-list"></div>
       </div>
       
@@ -44,10 +44,6 @@
           <option value="medio">Medio (6-10%)</option>
           <option value="bajo">Bajo (<6%)</option>
         </select>
-      </div>
-      
-      <div class="botones-capas">
-        <button id="btnDepartamentos" class="capa-btn active" onclick="toggleCapa('departamentos')">Departamentos</button>
       </div>
       
       <div class="botones-filtro">
