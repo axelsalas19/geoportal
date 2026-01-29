@@ -44,9 +44,9 @@ function inicializarMapa() {
     maxZoom: 18
   });
   
-  var capaSatelital = L.tileLayer('https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/argenmap_hibrido@EPSG%3A3857@png/{z}/{x}/{-y}.png', {
-    attribution: '© <a href="http://www.ign.gob.ar/">IGN Argentina</a>',
-    maxZoom: 18
+  var capaSatelitalGoogle = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+  attribution: '© Google',
+  maxZoom: 20
   });
   
   var capaDark = L.tileLayer('https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/mapabase_gris@EPSG%3A3857@png/{z}/{x}/{-y}.png', {
