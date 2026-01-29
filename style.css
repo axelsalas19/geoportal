@@ -294,8 +294,8 @@ body {
 }
 /* ===== POSICIONAMIENTO DEL BOTÓN DE ZOOM ===== */
 .leaflet-control-zoom {
-  margin-top: 10px !important; /* 👈 Separa el zoom del borde superior */
-  margin-left: 10px !important; /* 👈 Separa del borde izquierdo */
+  margin-top: 100px !important; /* 👈 Separa el zoom del borde superior */
+  margin-left: 100px !important; /* 👈 Separa del borde izquierdo */
   /* O también puedes moverlo a la derecha: */
   /* margin-right: 10px !important; */
 }
