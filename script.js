@@ -37,12 +37,35 @@ async function inicializarAplicacion() {
 function inicializarMapa() {
   // Inicializar mapa centrado en Argentina
   map = L.map('map').setView([-38.4161, -63.6167], 5);
-
-  // Capa base ArgenMap
-  L.tileLayer('https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/capabaseargenmap@EPSG%3A3857@png/{z}/{x}/{-y}.png', {
+  
+  // Definir las capas base de ArgenMap
+  var capaBase = L.tileLayer('https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/capabaseargenmap@EPSG%3A3857@png/{z}/{x}/{-y}.png', {
     attribution: '© <a href="http://www.ign.gob.ar/">IGN Argentina</a>',
     maxZoom: 18
-  }).addTo(map);
+  });
+  
+  var capaSatelital = L.tileLayer('https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/argenmap_hibrido@EPSG%3A3857@png/{z}/{x}/{-y}.png', {
+    attribution: '© <a href="http://www.ign.gob.ar/">IGN Argentina</a>',
+    maxZoom: 18
+  });
+  
+  var capaDark = L.tileLayer('https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/mapabase_gris@EPSG%3A3857@png/{z}/{x}/{-y}.png', {
+    attribution: '© <a href="http://www.ign.gob.ar/">IGN Argentina</a>',
+    maxZoom: 18
+  });
+  
+  // Agregar la capa base por defecto
+  capaBase.addTo(map);
+  
+  // Crear objeto con las capas base para el control
+  var capasBase = {
+    "Mapa Base": capaBase,
+    "Satelital": capaSatelital,
+    "Oscuro": capaDark
+  };
+  
+  // Agregar control de capas al mapa
+  L.control.layers(capasBase).addTo(map);
 }
 
 // ===== FUNCIONES DE UTILIDAD =====
