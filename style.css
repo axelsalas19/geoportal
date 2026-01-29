@@ -294,10 +294,13 @@ body {
 }
 /* ===== POSICIONAMIENTO DEL BOTÓN DE ZOOM EN INFERIOR IZQUIERDO ===== */
 .leaflet-control-zoom {
-  
-  bottom: 80px !important; /* 👈 Distancia desde el borde inferior */
-  left: 15px !important; /* 👈 Distancia desde el borde izquierdo */
-  
+  margin-top: 0 !important;
+  margin-left: 0 !important;
+}
+
+.leaflet-bottom.leaflet-left {
+  bottom: 30px !important;
+  left: 15px !important;
 }
 /* ===== RESPONSIVE ===== */
 @media (max-width: 1200px) {
