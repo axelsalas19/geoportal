@@ -292,15 +292,15 @@ body {
   border: none !important; /* 👈 Quita el borde del contenedor */
   box-shadow: none !important;
 }
-/* ===== POSICIONAMIENTO DEL BOTÓN DE ZOOM EN INFERIOR IZQUIERDO ===== */
-.leaflet-control-zoom {
-  margin-top: 0 !important;
-  margin-left: 0 !important;
+
+/* ===== POSICIONAMIENTO DEL BOTÓN DE ZOOM EN SUPERIOR IZQUIERDO ===== */
+.leaflet-top.leaflet-left {
+  top: 120px !important; /* 👈 Distancia desde arriba (debajo del panel de controles) */
+  left: 15px !important; /* 👈 Distancia desde la izquierda */
 }
 
-.leaflet-bottom.leaflet-left {
-  bottom: 30px !important;
-  left: 15px !important;
+.leaflet-control-zoom {
+  margin: 0 !important; /* 👈 Elimina márgenes automáticos */
 }
 /* ===== RESPONSIVE ===== */
 @media (max-width: 1200px) {
