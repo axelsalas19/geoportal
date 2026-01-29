@@ -295,10 +295,9 @@ body {
 /* ===== POSICIONAMIENTO DEL BOTÓN DE ZOOM EN INFERIOR IZQUIERDO ===== */
 .leaflet-control-zoom {
   
-  top: auto !important; /* 👈 Desactiva el posicionamiento superior */
-  bottom: 100px !important; /* 👈 Distancia desde el borde inferior */
+  bottom: 80px !important; /* 👈 Distancia desde el borde inferior */
   left: 15px !important; /* 👈 Distancia desde el borde izquierdo */
-  margin: 0 !important; /* 👈 Elimina márgenes automáticos */
+  
 }
 /* ===== RESPONSIVE ===== */
 @media (max-width: 1200px) {
