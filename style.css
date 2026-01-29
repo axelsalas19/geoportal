@@ -292,12 +292,13 @@ body {
   border: none !important; /* 👈 Quita el borde del contenedor */
   box-shadow: none !important;
 }
-/* ===== POSICIONAMIENTO DEL BOTÓN DE ZOOM ===== */
+/* ===== POSICIONAMIENTO DEL BOTÓN DE ZOOM EN INFERIOR IZQUIERDO ===== */
 .leaflet-control-zoom {
-  margin-top: 200px !important; /* 👈 Separa el zoom del borde superior */
-  margin-left: 10px !important; /* 👈 Separa del borde izquierdo */
-  /* O también puedes moverlo a la derecha: */
-  /* margin-right: 10px !important; */
+  position: absolute !important;
+  top: auto !important; /* 👈 Desactiva el posicionamiento superior */
+  bottom: 30px !important; /* 👈 Distancia desde el borde inferior */
+  left: 15px !important; /* 👈 Distancia desde el borde izquierdo */
+  margin: 0 !important; /* 👈 Elimina márgenes automáticos */
 }
 /* ===== RESPONSIVE ===== */
 @media (max-width: 1200px) {
