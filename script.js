@@ -65,7 +65,7 @@ function inicializarMapa() {
   };
   
   L.control.layers(capasBase, null, {
-  position: 'topright'
+  position: 'bottomleft'
   }).addTo(map);
 }
 // ===== FUNCIONES DE UTILIDAD =====
