@@ -64,13 +64,10 @@ function inicializarMapa() {
     "Oscuro": capaDark
   };
   
-L.control.layers(capasBase, null, {
-  position: 'topright'     // 👈 Esquina superior derecha (por defecto)
-  // position: 'topleft'    // 👈 Esquina superior izquierda
-  // position: 'bottomright' // 👈 Esquina inferior derecha
-  // position: 'bottomleft'  // 👈 Esquina inferior izquierda
-}).addTo(map);
-
+  L.control.layers(capasBase, null, {
+  position: 'topright'
+  }).addTo(map);
+}
 // ===== FUNCIONES DE UTILIDAD =====
 function mostrarEstado(mensaje, tipo = 'info') {
   const status = document.getElementById('status');
