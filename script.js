@@ -64,9 +64,12 @@ function inicializarMapa() {
     "Oscuro": capaDark
   };
   
-  // Agregar control de capas al mapa
-  L.control.layers(capasBase).addTo(map);
-}
+L.control.layers(capasBase, null, {
+  position: 'topright'     // 👈 Esquina superior derecha (por defecto)
+  // position: 'topleft'    // 👈 Esquina superior izquierda
+  // position: 'bottomright' // 👈 Esquina inferior derecha
+  // position: 'bottomleft'  // 👈 Esquina inferior izquierda
+}).addTo(map);
 
 // ===== FUNCIONES DE UTILIDAD =====
 function mostrarEstado(mensaje, tipo = 'info') {
