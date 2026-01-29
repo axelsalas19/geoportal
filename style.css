@@ -292,6 +292,13 @@ body {
   border: none !important; /* 👈 Quita el borde del contenedor */
   box-shadow: none !important;
 }
+/* ===== POSICIONAMIENTO DEL BOTÓN DE ZOOM ===== */
+.leaflet-control-zoom {
+  margin-top: 120px !important; /* 👈 Separa el zoom del borde superior */
+  margin-left: 10px !important; /* 👈 Separa del borde izquierdo */
+  /* O también puedes moverlo a la derecha: */
+  /* margin-right: 10px !important; */
+}
 /* ===== RESPONSIVE ===== */
 @media (max-width: 1200px) {
   .controls {
