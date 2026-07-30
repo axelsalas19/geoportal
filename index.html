@@ -1,16 +1,18 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Geoportal - Extranjerización de Tierras Rurales</title>
-  
+
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-  
+
   <!-- Custom CSS -->
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
   <!-- Pantalla de carga -->
@@ -22,65 +24,68 @@
   <!-- Panel de controles -->
   <div class="controls">
     <div class="titulo">🌎 Geoportal - Extranjerización de Tierras Rurales</div>
-    
+
     <div class="filtros-container" id="filtrosContainer">
       <div class="filtro-grupo">
         <label>Provincia:</label>
-        <input type="text" id="filtroProvincia" placeholder="Ej: Neuquén" oninput="mostrarAutocomplete('provincia')">
-        <div id="autocomplete-provincia" class="autocomplete-list"></div>
+        <select id="filtroProvincia" onchange="actualizarDropdownDepartamentos(); aplicarFiltros()">
+          <option value="">Todas</option>
+        </select>
       </div>
-      
+
       <div class="filtro-grupo">
         <label>Departamento:</label>
-        <input type="text" id="filtroDepartamento" placeholder="Ej: Bariloche" oninput="mostrarAutocomplete('departamento')">
-        <div id="autocomplete-departamento" class="autocomplete-list"></div>
+        <select id="filtroDepartamento" onchange="aplicarFiltros()">
+          <option value="">Todos</option>
+        </select>
       </div>
-      
+
       <div class="filtro-grupo">
         <label>Nivel:</label>
         <select id="filtroNivel">
           <option value="">Todos</option>
           <option value="alto">Alto (>10%)</option>
           <option value="medio">Medio (6-10%)</option>
-          <option value="bajo">Bajo (<6%)</option>
+          <option value="bajo">Bajo (<6%)< /option>
         </select>
       </div>
-      
+
       <div class="botones-filtro">
         <button id="buscarBtn" onclick="aplicarFiltros()">Buscar</button>
         <button id="limpiarBtn" onclick="limpiarFiltros()">Limpiar</button>
       </div>
     </div>
-  </div>
 
-  <!-- Barra de estado -->
-  <div id="status"></div>
-  
-  <!-- Leyenda -->
-  <div class="leyenda">
-    <div class="leyenda-titulo">📋 Leyenda</div>
-    <div class="leyenda-item">
-      <div class="leyenda-color" style="background: #F44336;"></div>
-      <div class="leyenda-texto">Alto (>10%)</div>
-    </div>
-    <div class="leyenda-item">
-      <div class="leyenda-color" style="background: #FFC107;"></div>
-      <div class="leyenda-texto">Medio (6-10%)</div>
-    </div>
-    <div class="leyenda-item">
-      <div class="leyenda-color" style="background: #4CAF50;"></div>
-      <div class="leyenda-texto">Bajo (<6%)</div>
+    <!-- Leyenda -->
+    <div class="leyenda">
+      <div class="leyenda-titulo">📋 Nivel de Extranjerización</div>
+      <div class="leyenda-item">
+        <div class="leyenda-color" style="background: #F44336;"></div>
+        <div class="leyenda-texto">Alto (>10%)</div>
+      </div>
+      <div class="leyenda-item">
+        <div class="leyenda-color" style="background: #FFC107;"></div>
+        <div class="leyenda-texto">Medio (6-10%)</div>
+      </div>
+      <div class="leyenda-item">
+        <div class="leyenda-color" style="background: #4CAF50;"></div>
+        <div class="leyenda-texto">Bajo (&lt;6%)</div>
+      </div>
     </div>
   </div>
 
-  <!-- Mapa -->
-  <div id="map"></div>
+    <!-- Barra de estado -->
+    <div id="status"></div>
 
-  <!-- Leaflet JS -->
-  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-  
-  <!-- Custom JS -->
-  <script src="script.js"></script>
+    <!-- Mapa -->
+    <div id="map"></div>
+
+    <!-- Leaflet JS -->
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Custom JS -->
+    <script src="script.js"></script>
 
 </body>
+
 </html>

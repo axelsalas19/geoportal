@@ -36,21 +36,24 @@ async function inicializarAplicacion() {
 
 function inicializarMapa() {
   // Inicializar mapa centrado en Argentina
-  map = L.map('map').setView([-38.4161, -63.6167], 5);
+  map = L.map('map', { zoomControl: false }).setView([-38.4161, -63.6167], 5);
   
-  // Definir las capas base de ArgenMap
+  // Añadir control de zoom a la derecha
+  L.control.zoom({ position: 'topright' }).addTo(map);
+  
+  // Definir las capas base
   var capaBase = L.tileLayer('https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/capabaseargenmap@EPSG%3A3857@png/{z}/{x}/{-y}.png', {
     attribution: '© <a href="http://www.ign.gob.ar/">IGN Argentina</a>',
     maxZoom: 18
   });
   
   var capaSatelital = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
-  attribution: '© Google',
-  maxZoom: 18
+    attribution: '© Google',
+    maxZoom: 18
   });
   
-  var capaDark = L.tileLayer('https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/mapabase_gris@EPSG%3A3857@png/{z}/{x}/{-y}.png', {
-    attribution: '© <a href="http://www.ign.gob.ar/">IGN Argentina</a>',
+  var capaHibrida = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+    attribution: '© Google',
     maxZoom: 18
   });
   
@@ -59,13 +62,13 @@ function inicializarMapa() {
   
   // Crear objeto con las capas base para el control
   var capasBase = {
-    "Mapa Base": capaBase,
-    "Satelital": capaSatelital,
-    "Oscuro": capaDark
+    "ArgenMap": capaBase,
+    "Google Satélite": capaSatelital,
+    "Google Híbrido": capaHibrida
   };
   
   L.control.layers(capasBase, null, {
-  position: 'bottomleft'
+    position: 'topright'
   }).addTo(map);
 }
 // ===== FUNCIONES DE UTILIDAD =====
@@ -166,6 +169,17 @@ async function cargarDepartamentos() {
       if (props.prov) listaProvincias.add(props.prov);
     });
 
+    // Llenar dropdown de provincias
+    const selectProv = document.getElementById('filtroProvincia');
+    if (selectProv) {
+      Array.from(listaProvincias).sort().forEach(prov => {
+        const option = document.createElement('option');
+        option.value = prov;
+        option.textContent = prov;
+        selectProv.appendChild(option);
+      });
+    }
+
     // Crear capa de polígonos de departamentos
     departamentosLayer = L.geoJSON(geojson, {
       style: {
@@ -177,30 +191,25 @@ async function cargarDepartamentos() {
       onEachFeature: (feature, layer) => {
         const props = feature.properties;
         let popup = `<div style="padding: 8px; font-family: 'Segoe UI', sans-serif; max-width: 300px;">
-          <h4 style="color: #2d3748; margin-bottom: 8px;">${props.nam || props.nombre || 'Sin nombre'}</h4>`;
+          <h4 style="color: #2d3748; margin-bottom: 8px;">${props.nombre || props.nam || 'Sin nombre'}</h4>`;
         
-        if (props.prov) popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Provincia:</strong> ${props.prov}</p>`;
-        if (props.fna) popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Partido:</strong> ${props.fna}</p>`;
-        if (props.sup_rural !== undefined && props.sup_rural !== null) {
-          popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Sup. rural:</strong> ${props.sup_rural.toLocaleString()} ha</p>`;
+        if (props.sup_rural_ !== undefined && props.sup_rural_ !== null) {
+          popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Superficie rural total:</strong> ${props.sup_rural_.toLocaleString()} ha</p>`;
         }
         if (props.extranj_ha !== undefined && props.extranj_ha !== null) {
-          popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Extranjeros:</strong> ${props.extranj_ha.toLocaleString()} ha</p>`;
+          popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Superficie extranjerizada:</strong> ${props.extranj_ha.toLocaleString()} ha</p>`;
         }
         if (props.porcentaje !== undefined && props.porcentaje !== null) {
-          const porcentaje = props.porcentaje.toFixed(2);
+          const porcentaje = typeof props.porcentaje === 'number' ? props.porcentaje.toFixed(2) : props.porcentaje;
           let nivelColor = '#4CAF50';
-          let nivelTexto = 'Bajo';
           
           if (props.porcentaje > 10) {
             nivelColor = '#F44336';
-            nivelTexto = 'Alto';
           } else if (props.porcentaje >= 6) {
             nivelColor = '#FFC107';
-            nivelTexto = 'Medio';
           }
           
-          popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>% extranjeros:</strong> <span style="color: ${nivelColor}; font-weight: bold;">${porcentaje}% (${nivelTexto})</span></p>`;
+          popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Porcentaje:</strong> <span style="color: ${nivelColor}; font-weight: bold;">${porcentaje}%</span></p>`;
         }
         popup += `</div>`;
         
@@ -248,9 +257,11 @@ async function cargarDepartamentos() {
           puntosFeatures.push({
             type: 'Feature',
             properties: {
-              nombre: props.nam || props.nombre || 'Sin nombre',
+              nombre: props.nombre || props.nam || 'Sin nombre',
               prov: props.prov || '',
               fna: props.fna || '',
+              sup_rural_: props.sup_rural_,
+              extranj_ha: props.extranj_ha,
               porcentaje: porcentaje,
               color: color,
               nivel: nivel
@@ -285,10 +296,15 @@ async function cargarDepartamentos() {
         let popup = `<div style="padding: 8px; font-family: 'Segoe UI', sans-serif;">
           <h4 style="color: #2d3748; margin-bottom: 8px;">${props.nombre}</h4>`;
         
-        if (props.prov) popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Provincia:</strong> ${props.prov}</p>`;
-        if (props.fna) popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Partido:</strong> ${props.fna}</p>`;
+        if (props.sup_rural_ !== undefined && props.sup_rural_ !== null) {
+          popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Superficie rural total:</strong> ${props.sup_rural_.toLocaleString()} ha</p>`;
+        }
+        if (props.extranj_ha !== undefined && props.extranj_ha !== null) {
+          popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Superficie extranjerizada:</strong> ${props.extranj_ha.toLocaleString()} ha</p>`;
+        }
         if (props.porcentaje !== undefined && props.porcentaje !== null) {
-          popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>% extranjeros:</strong> ${props.porcentaje.toFixed(2)}%</p>`;
+          const porcentaje = typeof props.porcentaje === 'number' ? props.porcentaje.toFixed(2) : props.porcentaje;
+          popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Porcentaje:</strong> ${porcentaje}%</p>`;
         }
         popup += `</div>`;
         layer.bindPopup(popup);
@@ -300,6 +316,9 @@ async function cargarDepartamentos() {
     puntosLayer.addTo(map);
     map.fitBounds(departamentosLayer.getBounds());
     
+    // Inicializar dropdown de departamentos (muestra todos al principio)
+    actualizarDropdownDepartamentos();
+    
     mostrarEstado('Departamentos cargados', 'success');
     
   } catch (err) {
@@ -308,47 +327,43 @@ async function cargarDepartamentos() {
   }
 }
 
-// ===== AUTOCOMPLETADO =====
-function mostrarAutocomplete(tipo) {
-  let input, autocompleteDiv, lista;
+// ===== DROPDOWNS =====
+function actualizarDropdownDepartamentos() {
+  const selectProv = document.getElementById('filtroProvincia');
+  const selectDepto = document.getElementById('filtroDepartamento');
   
-  if (tipo === 'provincia') {
-    input = document.getElementById('filtroProvincia');
-    autocompleteDiv = document.getElementById('autocomplete-provincia');
-    lista = Array.from(listaProvincias);
-  } else {
-    input = document.getElementById('filtroDepartamento');
-    autocompleteDiv = document.getElementById(`autocomplete-${tipo}`);
-    lista = Array.from(listaDepartamentos);
-  }
+  if (!selectProv || !selectDepto) return;
   
-  const query = input.value.toLowerCase().trim();
+  const filtroProvinciaValue = selectProv.value;
+  const valorActual = selectDepto.value;
   
-  if (!query) {
-    autocompleteDiv.style.display = 'none';
-    return;
-  }
+  selectDepto.innerHTML = '<option value="">Todos</option>';
   
-  const resultados = lista.filter(item => 
-    item && item.toLowerCase().includes(query)
-  );
+  let deptosAMostrar = new Set();
   
-  if (resultados.length > 0) {
-    autocompleteDiv.innerHTML = '';
-    resultados.slice(0, 8).forEach(item => {
-      const div = document.createElement('div');
-      div.className = 'autocomplete-item';
-      div.textContent = item;
-      div.onclick = function() {
-        input.value = item;
-        autocompleteDiv.style.display = 'none';
-        aplicarFiltros();
-      };
-      autocompleteDiv.appendChild(div);
+  if (filtroProvinciaValue && departamentosLayer) {
+    departamentosLayer.eachLayer(function(layer) {
+      const props = layer.feature.properties;
+      const provincia = props.prov || '';
+      const deptoNombre = props.nam || props.nombre;
+      
+      if (provincia === filtroProvinciaValue && deptoNombre) {
+        deptosAMostrar.add(deptoNombre);
+      }
     });
-    autocompleteDiv.style.display = 'block';
   } else {
-    autocompleteDiv.style.display = 'none';
+    deptosAMostrar = listaDepartamentos;
+  }
+  
+  Array.from(deptosAMostrar).sort().forEach(depto => {
+    const option = document.createElement('option');
+    option.value = depto;
+    option.textContent = depto;
+    selectDepto.appendChild(option);
+  });
+  
+  if (deptosAMostrar.has(valorActual)) {
+    selectDepto.value = valorActual;
   }
 }
 
@@ -358,11 +373,6 @@ function aplicarFiltros() {
   const filtroProvincia = document.getElementById('filtroProvincia').value.toLowerCase().trim();
   const filtroDepto = document.getElementById('filtroDepartamento').value.toLowerCase().trim();
   const filtroNivel = document.getElementById('filtroNivel').value;
-  
-  // Ocultar autocomplete
-  document.querySelectorAll('.autocomplete-list').forEach(list => {
-    list.style.display = 'none';
-  });
   
   let totalDepartamentosFiltrados = 0;
   let boundsDepartamentos = null;
@@ -477,9 +487,8 @@ function limpiarFiltros() {
   document.getElementById('filtroDepartamento').value = '';
   document.getElementById('filtroNivel').value = '';
   
-  document.querySelectorAll('.autocomplete-list').forEach(list => {
-    list.style.display = 'none';
-  });
+  actualizarDropdownDepartamentos(); // Esto reinicia el select de departamentos y su valor
+
   
   aplicarFiltros();
 }
