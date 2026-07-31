@@ -369,27 +369,62 @@ body {
 }
 
 /* ===== RESPONSIVE ===== */
-@media (max-width: 1200px) {
+@media (max-width: 768px) {
   .controls {
-    max-height: 150px;
-    overflow-y: auto;
-  }
-
-  .controls:hover {
-    max-height: 300px;
-  }
-
-  .filtros-container {
-    flex-direction: column;
-  }
-
-  .botones-filtro {
-    margin-left: 0;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
     width: 100%;
-    justify-content: center;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: visible;
+    padding: 15px;
+    padding-bottom: 25px; /* Extra padding for bottom */
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    height: auto;
+    /* Remover flex-direction column y constraints anteriores */
+    align-items: flex-end;
   }
 
-  .leyenda {
-    display: none;
+  .controls::-webkit-scrollbar {
+    display: none; /* Ocultar barra de scroll en móviles */
+  }
+
+  .bento-card {
+    scroll-snap-align: center;
+    width: 85%; 
+    min-width: 280px;
+    flex: 0 0 auto;
+    margin-top: 0;
+    /* Menos padding para ahorrar espacio vertical */
+    padding: 15px;
+  }
+  
+  .leyenda-card {
+    margin-top: 0; /* Desactivar margin-top auto */
+    align-self: flex-end;
+  }
+
+  .titulo-card {
+    align-self: flex-end;
+  }
+
+  .filtros-card {
+    align-self: flex-end;
+  }
+  
+  /* Asegurar que las tarjetas no sean tan altas */
+  .filtros-container {
+    gap: 10px;
+  }
+  
+  .leyenda-item {
+    margin-bottom: 4px;
+  }
+  
+  .botones-filtro {
+    margin-top: 5px;
   }
 }
