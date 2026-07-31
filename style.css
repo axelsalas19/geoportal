@@ -5,61 +5,78 @@
   box-sizing: border-box;
 }
 
-body { 
-  margin: 0; 
+body {
+  margin: 0;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: #f0f4f8;
 }
 
-#map { 
-  height: 100vh; 
-  width: 100%; 
+#map {
+  height: 100vh;
+  width: 100%;
   z-index: 1;
 }
 
 /* ===== PANEL DE CONTROLES ===== */
-.controls { 
-  position: absolute; 
-  top: 0; 
-  left: 0; 
+.controls {
+  position: absolute;
+  top: 0;
+  left: 0;
   bottom: 0;
-  width: 320px; 
+  width: 320px;
   z-index: 1000;
-  background: rgba(255, 255, 255, 0.98);
-  padding: 20px;
-  box-shadow: 5px 0 20px rgba(0,0,0,0.15);
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: 15px;
-  border-right: 1px solid rgba(0,0,0,0.1);
+  padding: 20px;
+  pointer-events: none;
   overflow-y: auto;
+}
+
+.controls>* {
+  pointer-events: auto;
+}
+
+/* ===== BENTO CARDS ===== */
+.bento-card {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  flex-shrink: 0;
+}
+
+.titulo-card {
+  padding: 15px 20px;
+}
+
+.leyenda-card {
+  margin-top: auto;
 }
 
 .titulo {
   white-space: normal;
   font-size: 18px;
-  color: #2d3748;
-  font-weight: 700;
-  margin-right: 0;
-  margin-bottom: 10px;
+  color: #1a365d; /* Azul oscuro */
+  font-weight: 800;
   text-align: center;
-  background: linear-gradient(90deg, #667eea, #764ba2);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  margin-bottom: 0;
 }
 
 /* ===== FILTROS ===== */
 .filtros-container {
-  display: flex; 
+  display: flex;
   flex-direction: column;
-  gap: 15px; 
+  gap: 15px;
   width: 100%;
 }
 
 .filtro-grupo {
-  display: flex; 
+  display: flex;
   flex-direction: column;
   position: relative;
   min-width: 130px;
@@ -67,25 +84,28 @@ body {
 }
 
 .filtro-grupo label {
-  font-size: 11px; 
-  color: #4a5568; 
+  font-size: 11px;
+  color: #4a5568;
   margin-bottom: 4px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.3px;
 }
 
-.filtro-grupo input, .filtro-grupo select {
-  padding: 8px 12px;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 8px;
+.filtro-grupo input,
+.filtro-grupo select {
+  padding: 10px 14px;
+  border: 1.5px solid #edf2f7;
+  border-radius: 12px;
   font-size: 13px;
   transition: all 0.2s ease;
-  background: white;
+  background: #f7fafc;
   color: #2d3748;
+  font-weight: 500;
 }
 
-.filtro-grupo input:focus, .filtro-grupo select:focus {
+.filtro-grupo input:focus,
+.filtro-grupo select:focus {
   outline: none;
   border-color: #667eea;
   box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
@@ -105,7 +125,7 @@ body {
   overflow-y: auto;
   z-index: 1100;
   display: none;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
 .autocomplete-item {
@@ -124,8 +144,8 @@ body {
 
 /* ===== BOTONES ===== */
 .botones-filtro {
-  display: flex; 
-  gap: 10px; 
+  display: flex;
+  gap: 10px;
   margin-top: 10px;
   width: 100%;
   justify-content: center;
@@ -135,13 +155,13 @@ body {
   flex: 1;
 }
 
-.controls button { 
-  padding: 8px 16px; 
-  color: white; 
-  border: none; 
-  cursor: pointer; 
-  border-radius: 8px; 
-  font-weight: 600;
+.controls button {
+  padding: 10px 16px;
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 12px;
+  font-weight: 700;
   white-space: nowrap;
   font-size: 13px;
   transition: all 0.2s ease;
@@ -149,57 +169,57 @@ body {
   align-items: center;
   justify-content: center;
   gap: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.controls button:hover { 
+.controls button:hover {
   transform: translateY(-1px);
 }
 
-.controls button#buscarBtn { 
+.controls button#buscarBtn {
   background: linear-gradient(90deg, #48bb78, #38a169);
   min-width: 90px;
 }
 
-.controls button#buscarBtn:hover { 
+.controls button#buscarBtn:hover {
   background: linear-gradient(90deg, #38a169, #2f855a);
 }
 
-.controls button#limpiarBtn { 
+.controls button#limpiarBtn {
   background: linear-gradient(90deg, #f56565, #e53e3e);
   min-width: 90px;
 }
 
-.controls button#limpiarBtn:hover { 
+.controls button#limpiarBtn:hover {
   background: linear-gradient(90deg, #e53e3e, #c53030);
 }
 
 /* ===== BARRA DE ESTADO ===== */
-#status { 
-  position: absolute; 
-  top: 15px; 
-  left: calc(50% + 160px); 
+#status {
+  position: absolute;
+  top: 15px;
+  left: calc(50% + 160px);
   transform: translateX(-50%);
-  z-index: 1000; 
+  z-index: 1000;
   background: rgba(255, 255, 255, 0.95);
-  padding: 8px 20px; 
+  padding: 8px 20px;
   border-radius: 20px;
-  font-size: 13px; 
-  color: #2d3748; 
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  font-size: 13px;
+  color: #2d3748;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
   display: none;
   font-weight: 500;
-  border: 1px solid rgba(0,0,0,0.1);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   text-align: center;
   min-width: 250px;
 }
 
 /* ===== LEYENDA ===== */
 .leyenda {
-  margin-top: auto;
-  background: rgba(255, 255, 255, 0.5);
-  padding: 15px;
-  border-radius: 10px;
-  border: 1px solid rgba(0,0,0,0.05);
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  border: none;
   font-size: 13px;
 }
 
@@ -257,36 +277,56 @@ body {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
+
 /* ===== 🔧 MODIFICA AQUÍ LOS ESTILOS DE LOS BOTONES DE ZOOM DEL MAPA ===== */
 /* Estos son los controles de zoom (+/-) que aparecen en el mapa */
 /* Si estás usando Leaflet, agrega estos estilos: */
 
 .leaflet-control-zoom a {
-  background-color: white !important; /* 👈 Color de fondo de los botones */
-  color: #2d3748 !important; /* 👈 Color del símbolo + y - */
-  border: 1.5px solid #e2e8f0 !important; /* 👈 Borde de los botones */
-  border-radius: 8px !important; /* 👈 Bordes redondeados */
-  width: 36px !important; /* 👈 Ancho del botón */
-  height: 36px !important; /* 👈 Alto del botón */
-  line-height: 36px !important; /* 👈 Centrado vertical del texto */
-  font-size: 20px !important; /* 👈 Tamaño del símbolo */
-  font-weight: 700 !important; /* 👈 Grosor del símbolo */
-  box-shadow: 0 3px 10px rgba(0,0,0,0.1) !important; /* 👈 Sombra */
+  background-color: white !important;
+  /* 👈 Color de fondo de los botones */
+  color: #2d3748 !important;
+  /* 👈 Color del símbolo + y - */
+  border: 1.5px solid #e2e8f0 !important;
+  /* 👈 Borde de los botones */
+  border-radius: 8px !important;
+  /* 👈 Bordes redondeados */
+  width: 36px !important;
+  /* 👈 Ancho del botón */
+  height: 36px !important;
+  /* 👈 Alto del botón */
+  line-height: 36px !important;
+  /* 👈 Centrado vertical del texto */
+  font-size: 20px !important;
+  /* 👈 Tamaño del símbolo */
+  font-weight: 700 !important;
+  /* 👈 Grosor del símbolo */
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1) !important;
+  /* 👈 Sombra */
   transition: all 0.2s ease !important;
 }
 
 .leaflet-control-zoom a:hover {
-  background: linear-gradient(90deg, #667eea, #764ba2) !important; /* 👈 Color al hacer hover */
-  color: white !important; /* 👈 Color del símbolo al hacer hover */
-  transform: translateY(-2px) !important; /* 👈 Efecto de elevación */
-  box-shadow: 0 5px 15px rgba(0,0,0,0.2) !important;
+  background: linear-gradient(90deg, #667eea, #764ba2) !important;
+  /* 👈 Color al hacer hover */
+  color: white !important;
+  /* 👈 Color del símbolo al hacer hover */
+  transform: translateY(-2px) !important;
+  /* 👈 Efecto de elevación */
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2) !important;
 }
 
 .leaflet-control-zoom {
-  border: none !important; /* 👈 Quita el borde del contenedor */
+  border: none !important;
+  /* 👈 Quita el borde del contenedor */
   box-shadow: none !important;
 }
 
@@ -295,7 +335,7 @@ body {
 .leaflet-control-layers {
   border-radius: 8px !important;
   border: 1.5px solid #e2e8f0 !important;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.1) !important;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1) !important;
   margin-top: 10px !important;
   margin-right: 10px !important;
 }
@@ -334,21 +374,21 @@ body {
     max-height: 150px;
     overflow-y: auto;
   }
-  
+
   .controls:hover {
     max-height: 300px;
   }
-  
+
   .filtros-container {
     flex-direction: column;
   }
-  
+
   .botones-filtro {
     margin-left: 0;
     width: 100%;
     justify-content: center;
   }
-  
+
   .leyenda {
     display: none;
   }

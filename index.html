@@ -23,68 +23,74 @@
 
   <!-- Panel de controles -->
   <div class="controls">
-    <div class="titulo">🌎 Geoportal - Extranjerización de Tierras Rurales</div>
+    <div class="bento-card titulo-card">
+      <div class="titulo">🌎 Geoportal - Extranjerización de Tierras Rurales</div>
+    </div>
 
-    <div class="filtros-container" id="filtrosContainer">
-      <div class="filtro-grupo">
-        <label>Provincia:</label>
-        <select id="filtroProvincia" onchange="actualizarDropdownDepartamentos(); aplicarFiltros()">
-          <option value="">Todas</option>
-        </select>
-      </div>
+    <div class="bento-card filtros-card">
+      <div class="filtros-container" id="filtrosContainer">
+        <div class="filtro-grupo">
+          <label>Provincia:</label>
+          <select id="filtroProvincia" onchange="actualizarDropdownDepartamentos(); aplicarFiltros()">
+            <option value="">Todas</option>
+          </select>
+        </div>
 
-      <div class="filtro-grupo">
-        <label>Departamento:</label>
-        <select id="filtroDepartamento" onchange="aplicarFiltros()">
-          <option value="">Todos</option>
-        </select>
-      </div>
+        <div class="filtro-grupo">
+          <label>Departamento:</label>
+          <select id="filtroDepartamento" onchange="aplicarFiltros()">
+            <option value="">Todos</option>
+          </select>
+        </div>
 
-      <div class="filtro-grupo">
-        <label>Nivel:</label>
-        <select id="filtroNivel">
-          <option value="">Todos</option>
-          <option value="alto">Alto (>10%)</option>
-          <option value="medio">Medio (6-10%)</option>
-          <option value="bajo">Bajo (<6%)< /option>
-        </select>
-      </div>
+        <div class="filtro-grupo">
+          <label>Nivel:</label>
+          <select id="filtroNivel">
+            <option value="">Todos</option>
+            <option value="alto">Alto (>10%)</option>
+            <option value="medio">Medio (6-10%)</option>
+            <option value="bajo">Bajo (<6%)< /option>
+          </select>
+        </div>
 
-      <div class="botones-filtro">
-        <button id="buscarBtn" onclick="aplicarFiltros()">Buscar</button>
-        <button id="limpiarBtn" onclick="limpiarFiltros()">Limpiar</button>
+        <div class="botones-filtro">
+          <button id="buscarBtn" onclick="aplicarFiltros()">Buscar</button>
+          <button id="limpiarBtn" onclick="limpiarFiltros()">Limpiar</button>
+        </div>
       </div>
     </div>
 
     <!-- Leyenda -->
-    <div class="leyenda">
-      <div class="leyenda-titulo">📋 Nivel de Extranjerización</div>
-      <div class="leyenda-item">
-        <div class="leyenda-color" style="background: #F44336;"></div>
-        <div class="leyenda-texto">Alto (>10%)</div>
-      </div>
-      <div class="leyenda-item">
-        <div class="leyenda-color" style="background: #FFC107;"></div>
-        <div class="leyenda-texto">Medio (6-10%)</div>
-      </div>
-      <div class="leyenda-item">
-        <div class="leyenda-color" style="background: #4CAF50;"></div>
-        <div class="leyenda-texto">Bajo (&lt;6%)</div>
+    <div class="bento-card leyenda-card">
+      <div class="leyenda">
+        <div class="leyenda-titulo">📋 Nivel de Extranjerización</div>
+        <div class="leyenda-item">
+          <div class="leyenda-color" style="background: #F44336;"></div>
+          <div class="leyenda-texto">Alto (>10%)</div>
+        </div>
+        <div class="leyenda-item">
+          <div class="leyenda-color" style="background: #FFC107;"></div>
+          <div class="leyenda-texto">Medio (6-10%)</div>
+        </div>
+        <div class="leyenda-item">
+          <div class="leyenda-color" style="background: #4CAF50;"></div>
+          <div class="leyenda-texto">Bajo (&lt;6%)</div>
+        </div>
       </div>
     </div>
   </div>
 
-    <!-- Barra de estado -->
-    <div id="status"></div>
+  <!-- Barra de estado -->
+  <div id="status"></div>
 
-    <!-- Mapa -->
-    <div id="map"></div>
+  <!-- Mapa -->
+  <div id="map"></div>
 
-    <!-- Leaflet JS -->
-    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Leaflet JS -->
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    <!-- Custom JS -->
-    <script src="script.js"></script>
+  <!-- Custom JS -->
+  <script src="script.js"></script>
 
 </body>
 
