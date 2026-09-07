@@ -1,6 +1,5 @@
-// ===== CONFIGURACIÓN DE SUPABASE =====
-const URL_SUPABASE = 'https://gnknhnxasvmrejdpljux.supabase.co';
-const API_KEY_SUPABASE = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdua25obnhhc3ZtcmVqZHBsanV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzOTIyMDcsImV4cCI6MjA4Mzk2ODIwN30.pbuYSf7fz_3o3UScjfAr0dS_LlT-ZFwC4hbU0MTWMj4';
+// ===== CONFIGURACIÓN =====
+const GEOJSON_PATH = 'departamentos.geojson';
 
 // ===== VARIABLES GLOBALES =====
 let map = null;
@@ -135,16 +134,7 @@ async function cargarDepartamentos() {
   try {
     mostrarEstado('Cargando departamentos...', 'info');
     
-    const res = await fetch(`${URL_SUPABASE}/rest/v1/rpc/get_departamentos_geojson`, {
-      method: 'POST',
-      headers: {
-        'apikey': API_KEY_SUPABASE,
-        'Authorization': `Bearer ${API_KEY_SUPABASE}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=representation'
-      },
-      body: JSON.stringify({})
-    });
+    const res = await fetch(GEOJSON_PATH);
 
     if (!res.ok) {
       const errorText = await res.text();
@@ -193,8 +183,8 @@ async function cargarDepartamentos() {
         let popup = `<div style="padding: 8px; font-family: 'Segoe UI', sans-serif; max-width: 300px;">
           <h4 style="color: #2d3748; margin-bottom: 8px;">${props.nombre || props.nam || 'Sin nombre'}</h4>`;
         
-        if (props.sup_rural_ !== undefined && props.sup_rural_ !== null) {
-          popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Superficie rural total:</strong> ${props.sup_rural_.toLocaleString()} ha</p>`;
+        if (props.sup_rural !== undefined && props.sup_rural !== null) {
+          popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Superficie rural total:</strong> ${props.sup_rural.toLocaleString()} ha</p>`;
         }
         if (props.extranj_ha !== undefined && props.extranj_ha !== null) {
           popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Superficie extranjerizada:</strong> ${props.extranj_ha.toLocaleString()} ha</p>`;
@@ -260,7 +250,7 @@ async function cargarDepartamentos() {
               nombre: props.nombre || props.nam || 'Sin nombre',
               prov: props.prov || '',
               fna: props.fna || '',
-              sup_rural_: props.sup_rural_,
+              sup_rural: props.sup_rural,
               extranj_ha: props.extranj_ha,
               porcentaje: porcentaje,
               color: color,
@@ -296,8 +286,8 @@ async function cargarDepartamentos() {
         let popup = `<div style="padding: 8px; font-family: 'Segoe UI', sans-serif;">
           <h4 style="color: #2d3748; margin-bottom: 8px;">${props.nombre}</h4>`;
         
-        if (props.sup_rural_ !== undefined && props.sup_rural_ !== null) {
-          popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Superficie rural total:</strong> ${props.sup_rural_.toLocaleString()} ha</p>`;
+        if (props.sup_rural !== undefined && props.sup_rural !== null) {
+          popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Superficie rural total:</strong> ${props.sup_rural.toLocaleString()} ha</p>`;
         }
         if (props.extranj_ha !== undefined && props.extranj_ha !== null) {
           popup += `<p style="margin: 4px 0; font-size: 13px;"><strong>Superficie extranjerizada:</strong> ${props.extranj_ha.toLocaleString()} ha</p>`;
